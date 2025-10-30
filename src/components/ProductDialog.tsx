@@ -18,7 +18,8 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { supabase, type Product } from '@/lib/supabase';
+import { db, type Product } from '@/lib/firebase';
+import { collection, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -86,35 +87,25 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
       updated_at: new Date().toISOString(),
     };
 
-    if (product) {
-      const { error } = await supabase
-        .from('products')
-        .update(productData)
-        .eq('id', product.id);
-
-      if (error) {
-        toast({
-          title: 'Error updating product',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } else {
+    try {
+      if (product) {
+        await updateDoc(doc(db, 'products', product.id), productData);
         toast({ title: 'Product updated successfully' });
         onSuccess();
-      }
-    } else {
-      const { error } = await supabase.from('products').insert([productData]);
-
-      if (error) {
-        toast({
-          title: 'Error creating product',
-          description: error.message,
-          variant: 'destructive',
-        });
       } else {
+        await addDoc(collection(db, 'products'), {
+          ...productData,
+          created_at: new Date().toISOString(),
+        });
         toast({ title: 'Product created successfully' });
         onSuccess();
       }
+    } catch (error: any) {
+      toast({
+        title: product ? 'Error updating product' : 'Error creating product',
+        description: error.message,
+        variant: 'destructive',
+      });
     }
   };
 

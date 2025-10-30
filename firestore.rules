@@ -1,0 +1,33 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Products collection
+    match /products/{productId} {
+      // Allow anyone to read products
+      allow read: if true;
+      
+      // Allow anyone to create, update, delete products (adjust based on your auth requirements)
+      allow create, update, delete: if true;
+    }
+    
+    // Orders collection
+    match /orders/{orderId} {
+      // Allow anyone to read orders
+      allow read: if true;
+      
+      // Allow anyone to create, update, delete orders (adjust based on your auth requirements)
+      allow create, update, delete: if true;
+    }
+    
+    // Order items collection
+    match /order_items/{itemId} {
+      // Allow anyone to read order items
+      allow read: if true;
+      
+      // Allow anyone to create, update, delete order items (adjust based on your auth requirements)
+      allow create, update, delete: if true;
+    }
+  }
+}

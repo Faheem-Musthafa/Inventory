@@ -26,7 +26,8 @@ import {
 } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { supabase, type Product } from '@/lib/supabase';
+import { db, type Product } from '@/lib/firebase';
+import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -74,12 +75,24 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   }, [open, form]);
 
   const loadProducts = async () => {
-    const { data } = await supabase
-      .from('products')
-      .select('*')
-      .gt('stock', 0)
-      .order('name');
-    setProducts(data || []);
+    try {
+      // Fetch all products and filter in memory to avoid composite index requirement
+      const querySnapshot = await getDocs(collection(db, 'products'));
+      const productsData = querySnapshot.docs
+        .map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Product[];
+      
+      // Filter products with stock > 0 and sort by name
+      const filteredProducts = productsData
+        .filter(p => p.stock > 0)
+        .sort((a, b) => a.name.localeCompare(b.name));
+      
+      setProducts(filteredProducts);
+    } catch (error) {
+      console.error('Error loading products:', error);
+    }
   };
 
   const addItem = () => {
@@ -153,62 +166,53 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       return;
     }
 
-    const { data: orderData, error: orderError } = await supabase
-      .from('orders')
-      .insert([
-        {
-          customer_name: data.customer_name,
-          payment_mode: data.payment_mode,
-          payment_status: 'Paid',
-          subtotal,
-          tax,
-          total,
-        },
-      ])
-      .select()
-      .single();
+    try {
+      // Create order
+      const orderData = {
+        customer_name: data.customer_name,
+        payment_mode: data.payment_mode,
+        payment_status: 'Paid',
+        subtotal,
+        tax,
+        total,
+        created_at: new Date().toISOString(),
+      };
 
-    if (orderError) {
+      const orderRef = await addDoc(collection(db, 'orders'), orderData);
+
+      // Create order items
+      const items = orderItems.map((item) => ({
+        order_id: orderRef.id,
+        product_id: item.product_id,
+        product_name: item.product_name,
+        quantity: item.quantity,
+        price: item.price,
+        total: item.total,
+      }));
+
+      for (const item of items) {
+        await addDoc(collection(db, 'order_items'), item);
+      }
+
+      // Update product stock
+      for (const item of orderItems) {
+        const product = products.find((p) => p.id === item.product_id);
+        if (product) {
+          await updateDoc(doc(db, 'products', item.product_id), {
+            stock: product.stock - item.quantity,
+          });
+        }
+      }
+
+      toast({ title: 'Order created successfully' });
+      onSuccess();
+    } catch (error: any) {
       toast({
         title: 'Error creating order',
-        description: orderError.message,
+        description: error.message,
         variant: 'destructive',
       });
-      return;
     }
-
-    const items = orderItems.map((item) => ({
-      order_id: orderData.id,
-      product_id: item.product_id,
-      product_name: item.product_name,
-      quantity: item.quantity,
-      price: item.price,
-      total: item.total,
-    }));
-
-    const { error: itemsError } = await supabase.from('order_items').insert(items);
-
-    if (itemsError) {
-      toast({
-        title: 'Error adding order items',
-        description: itemsError.message,
-        variant: 'destructive',
-      });
-      return;
-    }
-
-    for (const item of orderItems) {
-      const product = products.find((p) => p.id === item.product_id);
-      if (product) {
-        await supabase
-          .from('products')
-          .update({ stock: product.stock - item.quantity })
-          .eq('id', item.product_id);
-      }
-    }
-
-    toast({ title: 'Order created successfully' });
-    onSuccess();
   };
 
   return (

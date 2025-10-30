@@ -18,7 +18,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { supabase, type Product } from '@/lib/supabase';
+import { db, type Product } from '@/lib/firebase';
+import { collection, getDocs, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
 import { ProductDialog } from '@/components/ProductDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -42,21 +43,23 @@ export function Products() {
 
   const loadProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const q = query(collection(db, 'products'), orderBy('created_at', 'desc'));
+      const querySnapshot = await getDocs(q);
+      const productsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Product[];
+      setProducts(productsData);
+    } catch (error: any) {
       toast({
         title: 'Error loading products',
         description: error.message,
         variant: 'destructive',
       });
-    } else {
-      setProducts(data || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const filterProducts = () => {
@@ -80,17 +83,16 @@ export function Products() {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
-    const { error } = await supabase.from('products').delete().eq('id', id);
-
-    if (error) {
+    try {
+      await deleteDoc(doc(db, 'products', id));
+      toast({ title: 'Product deleted successfully' });
+      loadProducts();
+    } catch (error: any) {
       toast({
         title: 'Error deleting product',
         description: error.message,
         variant: 'destructive',
       });
-    } else {
-      toast({ title: 'Product deleted successfully' });
-      loadProducts();
     }
   };
 

@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react';
 import { DollarSign, ShoppingCart, TrendingUp, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase, type Product, type Order } from '@/lib/supabase';
+import { db, type Product, type Order } from '@/lib/firebase';
+import { collection, getDocs } from 'firebase/firestore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 
@@ -23,46 +24,50 @@ export function Reports() {
   const loadReports = async () => {
     setLoading(true);
 
-    const [ordersRes, productsRes, itemsRes] = await Promise.all([
-      supabase.from('orders').select('*'),
-      supabase.from('products').select('category, price, stock'),
-      supabase.from('order_items').select('product_name, total'),
-    ]);
+    try {
+      const [ordersSnapshot, productsSnapshot, itemsSnapshot] = await Promise.all([
+        getDocs(collection(db, 'orders')),
+        getDocs(collection(db, 'products')),
+        getDocs(collection(db, 'order_items')),
+      ]);
 
-    const orders = (ordersRes.data || []) as Order[];
-    const products = (productsRes.data || []) as Product[];
-    const items = itemsRes.data || [];
+      const orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
+      const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
+      const items = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const total = orders.reduce((sum, o) => sum + Number(o.total), 0);
-    setTotalSales(total);
-    setTotalOrders(orders.length);
-    setAverageOrder(orders.length > 0 ? total / orders.length : 0);
+      const total = orders.reduce((sum, o) => sum + Number(o.total), 0);
+      setTotalSales(total);
+      setTotalOrders(orders.length);
+      setAverageOrder(orders.length > 0 ? total / orders.length : 0);
 
-    const categoryMap = new Map<string, number>();
-    products.forEach((p) => {
-      const current = categoryMap.get(p.category) || 0;
-      categoryMap.set(p.category, current + Number(p.price) * p.stock);
-    });
+      const categoryMap = new Map<string, number>();
+      products.forEach((p) => {
+        const current = categoryMap.get(p.category) || 0;
+        categoryMap.set(p.category, current + Number(p.price) * p.stock);
+      });
 
-    const catData = Array.from(categoryMap.entries()).map(([name, value]) => ({
-      name,
-      value,
-    }));
-    setCategoryData(catData);
+      const catData = Array.from(categoryMap.entries()).map(([name, value]) => ({
+        name,
+        value,
+      }));
+      setCategoryData(catData);
 
-    const productMap = new Map<string, number>();
-    items.forEach((item: { product_name: string; total: number }) => {
-      const current = productMap.get(item.product_name) || 0;
-      productMap.set(item.product_name, current + Number(item.total));
-    });
+      const productMap = new Map<string, number>();
+      items.forEach((item: any) => {
+        const current = productMap.get(item.product_name) || 0;
+        productMap.set(item.product_name, current + Number(item.total));
+      });
 
-    const top = Array.from(productMap.entries())
-      .map(([name, revenue]) => ({ name, revenue }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5);
-    setTopProducts(top);
-
-    setLoading(false);
+      const top = Array.from(productMap.entries())
+        .map(([name, revenue]) => ({ name, revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5);
+      setTopProducts(top);
+    } catch (error) {
+      console.error('Error loading reports:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const exportToCSV = () => {

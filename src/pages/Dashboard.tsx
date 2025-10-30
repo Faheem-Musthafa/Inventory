@@ -3,7 +3,8 @@ import { Package, ShoppingCart, DollarSign, TrendingUp, Plus } from 'lucide-reac
 import { StatCard } from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { supabase } from '@/lib/supabase';
+import { db } from '@/lib/firebase';
+import { collection, getDocs, query, where } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
 
@@ -31,41 +32,65 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
   const loadDashboardData = async () => {
     setLoading(true);
 
-    const [productsRes, ordersRes, todayOrdersRes] = await Promise.all([
-      supabase.from('products').select('price, stock'),
-      supabase.from('orders').select('total, created_at'),
-      supabase.from('orders').select('total').gte('created_at', format(new Date(), 'yyyy-MM-dd')),
-    ]);
+    try {
+      // Fetch products
+      const productsSnapshot = await getDocs(collection(db, 'products'));
+      const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const products = productsRes.data || [];
-    const orders = ordersRes.data || [];
-    const todayOrders = todayOrdersRes.data || [];
+      // Fetch orders
+      const ordersSnapshot = await getDocs(collection(db, 'orders'));
+      const orders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    const stockValue = products.reduce((sum, p) => sum + (Number(p.price) * p.stock), 0);
-    const todaySales = todayOrders.reduce((sum, o) => sum + Number(o.total), 0);
+      // Fetch today's orders
+      const todayStart = format(new Date(), 'yyyy-MM-dd');
+      const todayOrdersQuery = query(
+        collection(db, 'orders'),
+        where('created_at', '>=', todayStart)
+      );
+      const todayOrdersSnapshot = await getDocs(todayOrdersQuery);
+      const todayOrders = todayOrdersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-    setStats({
-      totalProducts: products.length,
-      totalOrders: orders.length,
-      stockValue,
-      todaySales,
-    });
+      const stockValue = products.reduce((sum: number, p: any) => sum + (Number(p.price) * p.stock), 0);
+      const todaySales = todayOrders.reduce((sum: number, o: any) => sum + Number(o.total), 0);
 
-    const last7Days = Array.from({ length: 7 }, (_, i) => {
-      const date = subDays(new Date(), 6 - i);
-      const dateStr = format(date, 'yyyy-MM-dd');
-      const daySales = orders
-        .filter(o => format(new Date(o.created_at), 'yyyy-MM-dd') === dateStr)
-        .reduce((sum, o) => sum + Number(o.total), 0);
+      setStats({
+        totalProducts: products.length,
+        totalOrders: orders.length,
+        stockValue,
+        todaySales,
+      });
 
-      return {
-        date: format(date, 'MMM dd'),
-        sales: daySales,
-      };
-    });
+      const last7Days = Array.from({ length: 7 }, (_, i) => {
+        const date = subDays(new Date(), 6 - i);
+        const dateStr = format(date, 'yyyy-MM-dd');
+        const daySales = orders
+          .filter((o: any) => {
+            if (!o.created_at) return false;
+            try {
+              // Handle both timestamp and string formats
+              const orderDate = typeof o.created_at === 'string' 
+                ? new Date(o.created_at) 
+                : new Date(o.created_at);
+              if (isNaN(orderDate.getTime())) return false;
+              return format(orderDate, 'yyyy-MM-dd') === dateStr;
+            } catch {
+              return false;
+            }
+          })
+          .reduce((sum: number, o: any) => sum + Number(o.total), 0);
 
-    setSalesData(last7Days);
-    setLoading(false);
+        return {
+          date: format(date, 'MMM dd'),
+          sales: daySales,
+        };
+      });
+
+      setSalesData(last7Days);
+    } catch (error) {
+      console.error('Error loading dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   if (loading) {

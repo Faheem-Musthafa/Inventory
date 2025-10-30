@@ -10,7 +10,8 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { supabase, type OrderWithItems } from '@/lib/supabase';
+import { db, type OrderWithItems } from '@/lib/firebase';
+import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
 import { CreateOrderDialog } from '@/components/CreateOrderDialog';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -30,21 +31,42 @@ export function Orders() {
 
   const loadOrders = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('orders')
-      .select('*, order_items(*)')
-      .order('created_at', { ascending: false });
-
-    if (error) {
+    try {
+      const ordersQuery = query(collection(db, 'orders'), orderBy('created_at', 'desc'));
+      const ordersSnapshot = await getDocs(ordersQuery);
+      
+      const ordersWithItems = await Promise.all(
+        ordersSnapshot.docs.map(async (orderDoc) => {
+          const orderData = { id: orderDoc.id, ...orderDoc.data() };
+          
+          // Fetch order items for this order
+          const itemsQuery = query(
+            collection(db, 'order_items'),
+            where('order_id', '==', orderDoc.id)
+          );
+          const itemsSnapshot = await getDocs(itemsQuery);
+          const items = itemsSnapshot.docs.map(itemDoc => ({
+            id: itemDoc.id,
+            ...itemDoc.data()
+          }));
+          
+          return {
+            ...orderData,
+            order_items: items
+          } as OrderWithItems;
+        })
+      );
+      
+      setOrders(ordersWithItems);
+    } catch (error: any) {
       toast({
         title: 'Error loading orders',
         description: error.message,
         variant: 'destructive',
       });
-    } else {
-      setOrders((data as OrderWithItems[]) || []);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   };
 
   const handleViewInvoice = (order: OrderWithItems) => {

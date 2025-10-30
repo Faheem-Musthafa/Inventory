@@ -1,7 +1,7 @@
 import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
-import { type OrderWithItems } from '@/lib/supabase';
+import { type OrderWithItems } from '@/lib/firebase';
 import { format } from 'date-fns';
 
 interface InvoiceDialogProps {
