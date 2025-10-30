@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
-import { Package, ShoppingCart, DollarSign, TrendingUp, Plus } from 'lucide-react';
+import { Package, ShoppingCart,Plus } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { db } from '@/lib/firebase';
-import { collection, getDocs, query, where } from 'firebase/firestore';
+import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
+import { IndianRupee, TrendingUp } from 'lucide-react';
 
 interface DashboardStats {
   totalProducts: number;
@@ -14,6 +15,14 @@ interface DashboardStats {
   stockValue: number;
   todaySales: number;
 }
+
+interface StoreSettings {
+  currency: string;
+}
+
+const DEFAULT_SETTINGS: StoreSettings = {
+  currency: '₹',
+};
 
 export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
   const [stats, setStats] = useState<DashboardStats>({
@@ -24,10 +33,28 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
   });
   const [salesData, setSalesData] = useState<Array<{ date: string; sales: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
+    loadSettings();
     loadDashboardData();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        setSettings({ currency: data.currency || '₹' });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `${settings.currency}${amount.toFixed(2)}`;
+  };
 
   const loadDashboardData = async () => {
     setLoading(true);
@@ -125,28 +152,27 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
           title="Total Products"
           value={stats.totalProducts}
           icon={Package}
-          trend="+12% from last month"
           trendUp
         />
         <StatCard
           title="Total Orders"
           value={stats.totalOrders}
           icon={ShoppingCart}
-          trend="+8% from last month"
+          // trend="+8% from last month"
           trendUp
         />
         <StatCard
           title="Stock Value"
-          value={`$${stats.stockValue.toFixed(2)}`}
-          icon={DollarSign}
-          trend="+5% from last month"
+          value={formatCurrency(stats.stockValue)}
+          icon={IndianRupee}
+          // trend="+5% from last month"
           trendUp
         />
         <StatCard
           title="Today's Sales"
-          value={`$${stats.todaySales.toFixed(2)}`}
+          value={formatCurrency(stats.todaySales)}
           icon={TrendingUp}
-          trend="+15% from yesterday"
+          // trend="+15% from yesterday"
           trendUp
         />
       </div>
@@ -168,7 +194,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
                     border: '1px solid #e5e7eb',
                     borderRadius: '8px',
                   }}
-                  formatter={(value: number) => [`$${value.toFixed(2)}`, 'Sales']}
+                  formatter={(value: number) => [formatCurrency(value), 'Sales']}
                 />
                 <Bar dataKey="sales" fill="#3b82f6" radius={[8, 8, 0, 0]} />
               </BarChart>

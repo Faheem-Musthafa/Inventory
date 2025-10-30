@@ -6,6 +6,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
@@ -27,7 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { db, type Product } from '@/lib/firebase';
-import { collection, getDocs, addDoc, updateDoc, doc } from 'firebase/firestore';
+import { collection, getDocs, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
@@ -56,6 +57,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
+  const [taxRate, setTaxRate] = useState(0.1); // Default 10%
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -68,11 +70,25 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
 
   useEffect(() => {
     if (open) {
+      loadSettings();
       loadProducts();
       setOrderItems([]);
       form.reset();
     }
   }, [open, form]);
+
+  const loadSettings = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'store');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const settings = docSnap.data();
+        setTaxRate((settings.taxRate || 10) / 100); // Convert percentage to decimal
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
 
   const loadProducts = async () => {
     try {
@@ -153,7 +169,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   };
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
-  const tax = subtotal * 0.1;
+  const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
   const onSubmit = async (data: FormData) => {
@@ -220,6 +236,9 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
+          <DialogDescription>
+            Select products and enter customer information to create a new order
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -345,7 +364,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
                   <span className="font-medium">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax (10%)</span>
+                  <span className="text-gray-600">Tax ({(taxRate * 100).toFixed(1)}%)</span>
                   <span className="font-medium">${tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">

@@ -11,11 +11,19 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { db, type OrderWithItems } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, where } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, getDoc } from 'firebase/firestore';
 import { CreateOrderDialog } from '@/components/CreateOrderDialog';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+
+interface StoreSettings {
+  currency: string;
+}
+
+const DEFAULT_SETTINGS: StoreSettings = {
+  currency: '₹',
+};
 
 export function Orders() {
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
@@ -23,11 +31,29 @@ export function Orders() {
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
   const { toast } = useToast();
 
   useEffect(() => {
+    loadSettings();
     loadOrders();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        setSettings({ currency: data.currency || '₹' });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `${settings.currency}${amount.toFixed(2)}`;
+  };
 
   const loadOrders = async () => {
     setLoading(true);
@@ -142,7 +168,7 @@ export function Orders() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        ${Number(order.total).toFixed(2)}
+                        {formatCurrency(Number(order.total))}
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">

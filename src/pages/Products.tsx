@@ -19,7 +19,7 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { db, type Product } from '@/lib/firebase';
-import { collection, getDocs, deleteDoc, doc, orderBy, query } from 'firebase/firestore';
+import { collection, getDocs, deleteDoc, doc as firestoreDoc, orderBy, query, getDoc } from 'firebase/firestore';
 import { ProductDialog } from '@/components/ProductDialog';
 import { useToast } from '@/hooks/use-toast';
 
@@ -31,7 +31,32 @@ export function Products() {
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [lowStockThreshold, setLowStockThreshold] = useState(10);
+  const [currencySymbol, setCurrencySymbol] = useState('₹');
   const { toast } = useToast();
+
+  useEffect(() => {
+    loadSettings();
+    loadProducts();
+  }, []);
+
+  const loadSettings = async () => {
+    try {
+      const docRef = firestoreDoc(db, 'settings', 'store');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const settings = docSnap.data();
+        setLowStockThreshold(settings.lowStockThreshold || 10);
+        setCurrencySymbol(settings.currency || '₹');
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `${currencySymbol}${amount.toFixed(2)}`;
+  };
 
   useEffect(() => {
     loadProducts();
@@ -84,7 +109,7 @@ export function Products() {
     if (!confirm('Are you sure you want to delete this product?')) return;
 
     try {
-      await deleteDoc(doc(db, 'products', id));
+      await deleteDoc(firestoreDoc(db, 'products', id));
       toast({ title: 'Product deleted successfully' });
       loadProducts();
     } catch (error: any) {
@@ -191,11 +216,11 @@ export function Products() {
                           {product.category}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right">${Number(product.price).toFixed(2)}</TableCell>
+                      <TableCell className="text-right">{formatCurrency(Number(product.price))}</TableCell>
                       <TableCell className="text-right">
                         <span
                           className={`px-2 py-1 rounded-md text-sm font-medium ${
-                            product.stock < 10
+                            product.stock < lowStockThreshold
                               ? 'bg-red-50 text-red-700'
                               : 'bg-green-50 text-green-700'
                           }`}

@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 interface SidebarProps {
   currentPage: string;
@@ -15,6 +18,25 @@ const navigation = [
 ];
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
+  const [storeName, setStoreName] = useState('InventoryPro');
+
+  useEffect(() => {
+    loadStoreName();
+  }, []);
+
+  const loadStoreName = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'store');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const settings = docSnap.data();
+        setStoreName(settings.storeName || 'InventoryPro');
+      }
+    } catch (error) {
+      console.error('Error loading store name:', error);
+    }
+  };
+
   return (
     <div className="w-64 border-r bg-white h-screen sticky top-0 flex flex-col">
       <div className="p-6 border-b">
@@ -22,7 +44,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center">
             <Package className="w-5 h-5 text-white" />
           </div>
-          <span className="font-semibold text-xl text-gray-900">InventoryPro</span>
+          <span className="font-semibold text-xl text-gray-900">{storeName}</span>
         </div>
       </div>
 

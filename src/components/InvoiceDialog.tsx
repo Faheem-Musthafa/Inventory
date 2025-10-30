@@ -1,7 +1,9 @@
-import { Dialog, DialogContent } from '@/components/ui/dialog';
+import { useEffect, useState } from 'react';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Printer } from 'lucide-react';
-import { type OrderWithItems } from '@/lib/firebase';
+import { db, type OrderWithItems } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 
 interface InvoiceDialogProps {
@@ -10,16 +12,69 @@ interface InvoiceDialogProps {
   order: OrderWithItems | null;
 }
 
+interface StoreSettings {
+  storeName: string;
+  storeEmail: string;
+  storeAddress: string;
+  storePhone: string;
+  currency: string;
+}
+
+const DEFAULT_SETTINGS: StoreSettings = {
+  storeName: 'InventoryPro',
+  storeEmail: 'admin@store.com',
+  storeAddress: '123 Business Street, City, State 12345',
+  storePhone: '(555) 123-4567',
+  currency: '₹',
+};
+
 export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    if (open) {
+      loadSettings();
+    }
+  }, [open]);
+
+  const loadSettings = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'store');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setSettings({
+          storeName: data.storeName || DEFAULT_SETTINGS.storeName,
+          storeEmail: data.storeEmail || DEFAULT_SETTINGS.storeEmail,
+          storeAddress: data.storeAddress || DEFAULT_SETTINGS.storeAddress,
+          storePhone: data.storePhone || DEFAULT_SETTINGS.storePhone,
+          currency: data.currency || DEFAULT_SETTINGS.currency,
+        });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
   if (!order) return null;
 
   const handlePrint = () => {
     window.print();
   };
 
+  const formatCurrency = (amount: number) => {
+    return `$${amount.toFixed(2)}`;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto print:max-w-full">
+        <DialogHeader className="print:hidden">
+          <DialogTitle>Invoice #{order.id.slice(0, 8)}</DialogTitle>
+          <DialogDescription>
+            Order details for {order.customer_name}
+          </DialogDescription>
+        </DialogHeader>
         <div className="print:p-8">
           <div className="flex justify-between items-start mb-8 print:mb-12">
             <div>
@@ -27,10 +82,10 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
               <p className="text-sm text-gray-600">Order #{order.id.slice(0, 8)}</p>
             </div>
             <div className="text-right">
-              <h2 className="text-xl font-bold text-gray-900">InventoryPro</h2>
-              <p className="text-sm text-gray-600 mt-1">123 Business Street</p>
-              <p className="text-sm text-gray-600">City, State 12345</p>
-              <p className="text-sm text-gray-600">Phone: (555) 123-4567</p>
+              <h2 className="text-xl font-bold text-gray-900">{settings.storeName}</h2>
+              <p className="text-sm text-gray-600 mt-1">{settings.storeAddress}</p>
+              <p className="text-sm text-gray-600">Phone: {settings.storePhone}</p>
+              <p className="text-sm text-gray-600">Email: {settings.storeEmail}</p>
             </div>
           </div>
 
@@ -72,10 +127,10 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
                       {item.quantity}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                      ${Number(item.price).toFixed(2)}
+                      {formatCurrency(Number(item.price))}
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-900 text-right font-medium">
-                      ${Number(item.total).toFixed(2)}
+                      {formatCurrency(Number(item.total))}
                     </td>
                   </tr>
                 ))}
@@ -87,15 +142,15 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             <div className="w-64 space-y-2">
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
-                <span className="font-medium">${Number(order.subtotal).toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(Number(order.subtotal))}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Tax</span>
-                <span className="font-medium">${Number(order.tax).toFixed(2)}</span>
+                <span className="font-medium">{formatCurrency(Number(order.tax))}</span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">
                 <span>Total</span>
-                <span>${Number(order.total).toFixed(2)}</span>
+                <span>{formatCurrency(Number(order.total))}</span>
               </div>
             </div>
           </div>
@@ -103,7 +158,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           <div className="border-t pt-8 print:pt-12 text-center">
             <p className="text-lg font-medium text-gray-900 mb-2">Thank you for your business!</p>
             <p className="text-sm text-gray-600">
-              For questions about this invoice, please contact us at info@inventorypro.com
+              For questions about this invoice, please contact us at {settings.storeEmail}
             </p>
           </div>
 

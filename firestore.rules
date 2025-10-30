@@ -29,5 +29,14 @@ service cloud.firestore {
       // Allow anyone to create, update, delete order items (adjust based on your auth requirements)
       allow create, update, delete: if true;
     }
+    
+    // Settings collection
+    match /settings/{settingId} {
+      // Allow anyone to read settings
+      allow read: if true;
+      
+      // Allow anyone to create, update, delete settings (adjust based on your auth requirements)
+      allow create, update, delete: if true;
+    }
   }
 }

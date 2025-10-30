@@ -3,11 +3,19 @@ import { DollarSign, ShoppingCart, TrendingUp, Download } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { db, type Product, type Order } from '@/lib/firebase';
-import { collection, getDocs } from 'firebase/firestore';
+import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { format } from 'date-fns';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
+
+interface StoreSettings {
+  currency: string;
+}
+
+const DEFAULT_SETTINGS: StoreSettings = {
+  currency: '₹',
+};
 
 export function Reports() {
   const [totalSales, setTotalSales] = useState(0);
@@ -16,10 +24,28 @@ export function Reports() {
   const [categoryData, setCategoryData] = useState<Array<{ name: string; value: number }>>([]);
   const [topProducts, setTopProducts] = useState<Array<{ name: string; revenue: number }>>([]);
   const [loading, setLoading] = useState(true);
+  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
 
   useEffect(() => {
+    loadSettings();
     loadReports();
   }, []);
+
+  const loadSettings = async () => {
+    try {
+      const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
+      if (settingsDoc.exists()) {
+        const data = settingsDoc.data();
+        setSettings({ currency: data.currency || '₹' });
+      }
+    } catch (error) {
+      console.error('Error loading settings:', error);
+    }
+  };
+
+  const formatCurrency = (amount: number) => {
+    return `${settings.currency}${amount.toFixed(2)}`;
+  };
 
   const loadReports = async () => {
     setLoading(true);
@@ -109,7 +135,7 @@ export function Reports() {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-600">Total Sales</p>
-                <p className="text-3xl font-bold text-gray-900">${totalSales.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalSales)}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-lg">
                 <DollarSign className="w-6 h-6 text-blue-600" />
@@ -137,7 +163,7 @@ export function Reports() {
             <div className="flex items-start justify-between">
               <div className="space-y-2">
                 <p className="text-sm font-medium text-gray-600">Average Order</p>
-                <p className="text-3xl font-bold text-gray-900">${averageOrder.toFixed(2)}</p>
+                <p className="text-3xl font-bold text-gray-900">{formatCurrency(averageOrder)}</p>
               </div>
               <div className="p-3 bg-amber-50 rounded-lg">
                 <TrendingUp className="w-6 h-6 text-amber-600" />
@@ -171,7 +197,7 @@ export function Reports() {
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Pie>
-                    <Tooltip formatter={(value: number) => `$${value.toFixed(2)}`} />
+                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
                   </PieChart>
                 </ResponsiveContainer>
               ) : (
@@ -199,7 +225,7 @@ export function Reports() {
                       <span className="font-medium text-gray-900">{product.name}</span>
                     </div>
                     <span className="font-bold text-gray-900">
-                      ${product.revenue.toFixed(2)}
+                      {formatCurrency(product.revenue)}
                     </span>
                   </div>
                 ))

@@ -1,7 +1,44 @@
+import { useEffect, useState } from 'react';
 import { Bell, Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
+import { db } from '@/lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 
 export function Header() {
+  const [storeInfo, setStoreInfo] = useState({
+    storeName: 'InventoryPro',
+    storeEmail: 'admin@store.com',
+  });
+
+  useEffect(() => {
+    loadStoreInfo();
+  }, []);
+
+  const loadStoreInfo = async () => {
+    try {
+      const docRef = doc(db, 'settings', 'store');
+      const docSnap = await getDoc(docRef);
+      if (docSnap.exists()) {
+        const settings = docSnap.data();
+        setStoreInfo({
+          storeName: settings.storeName || 'InventoryPro',
+          storeEmail: settings.storeEmail || 'admin@store.com',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading store info:', error);
+    }
+  };
+
+  const getInitials = (name: string) => {
+    return name
+      .split(' ')
+      .map((word) => word[0])
+      .join('')
+      .toUpperCase()
+      .slice(0, 2);
+  };
+
   return (
     <header className="bg-white border-b sticky top-0 z-10">
       <div className="px-8 py-4 flex items-center justify-between">
@@ -25,10 +62,10 @@ export function Header() {
           <div className="flex items-center gap-3 pl-4 border-l">
             <div className="text-right">
               <p className="text-sm font-medium text-gray-900">Store Owner</p>
-              <p className="text-xs text-gray-500">admin@store.com</p>
+              <p className="text-xs text-gray-500">{storeInfo.storeEmail}</p>
             </div>
             <div className="w-10 h-10 rounded-full bg-gradient-to-br from-blue-600 to-blue-700 flex items-center justify-center text-white font-medium">
-              SO
+              {getInitials(storeInfo.storeName)}
             </div>
           </div>
         </div>
