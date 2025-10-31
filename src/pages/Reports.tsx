@@ -173,37 +173,93 @@ export function Reports() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Stock Value by Category</CardTitle>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2">
+              <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+              Stock Value by Category
+            </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="h-80">
-              {categoryData.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={categoryData}
-                      cx="50%"
-                      cy="50%"
-                      labelLine={false}
-                      label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                      outerRadius={80}
-                      fill="#8884d8"
-                      dataKey="value"
-                    >
-                      {categoryData.map((_, index) => (
-                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: number) => formatCurrency(value)} />
-                  </PieChart>
-                </ResponsiveContainer>
-              ) : (
-                <div className="flex items-center justify-center h-full text-gray-500">
-                  No data available
+            {categoryData.length > 0 ? (
+              <div className="space-y-6">
+                <div className="h-72 flex items-center justify-center">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={categoryData}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={false}
+                        outerRadius={100}
+                        innerRadius={60}
+                        fill="#8884d8"
+                        dataKey="value"
+                        paddingAngle={3}
+                      >
+                        {categoryData.map((_, index) => (
+                          <Cell 
+                            key={`cell-${index}`} 
+                            fill={COLORS[index % COLORS.length]}
+                            stroke="white"
+                            strokeWidth={2}
+                          />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        formatter={(value: number) => formatCurrency(value)}
+                        contentStyle={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.98)',
+                          border: 'none',
+                          borderRadius: '8px',
+                          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                          padding: '12px'
+                        }}
+                        labelStyle={{
+                          color: '#111827',
+                          fontWeight: '600',
+                          marginBottom: '4px'
+                        }}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
                 </div>
-              )}
-            </div>
+                <div className="space-y-2">
+                  {categoryData.map((category, index) => {
+                    const total = categoryData.reduce((sum, cat) => sum + cat.value, 0);
+                    const percentage = ((category.value / total) * 100).toFixed(1);
+                    return (
+                      <div 
+                        key={index} 
+                        className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-all hover:shadow-sm group"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          <div 
+                            className="w-4 h-4 rounded-full flex-shrink-0 ring-2 ring-white shadow-sm"
+                            style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                          ></div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-semibold text-gray-900 truncate">{category.name}</p>
+                            <p className="text-xs text-gray-500">{percentage}% of total stock value</p>
+                          </div>
+                        </div>
+                        <div className="text-right ml-3">
+                          <p className="text-sm font-bold text-gray-900">{formatCurrency(category.value)}</p>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            ) : (
+              <div className="h-80 flex flex-col items-center justify-center text-gray-400">
+                <svg className="w-16 h-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <p className="text-sm font-medium">No category data available</p>
+                <p className="text-xs mt-1">Add products to see stock distribution</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 
