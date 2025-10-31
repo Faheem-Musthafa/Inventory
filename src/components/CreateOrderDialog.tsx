@@ -239,13 +239,13 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
           <DialogDescription>
-            Select products and enter customer information to create a new order
+            Select products to create a new order
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 gap-4">
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="customer_name"
                 render={({ field }) => (
@@ -257,7 +257,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name="payment_mode"

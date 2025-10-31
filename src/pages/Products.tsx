@@ -4,14 +4,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
   Select,
   SelectContent,
   SelectItem,
@@ -194,62 +186,94 @@ export function Products() {
               </Button>
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>Product ID</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-right">Stock</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredProducts.map((product) => (
-                    <TableRow key={product.id}>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-gray-600">{product.sku}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-blue-50 text-blue-700 rounded-md text-sm">
-                          {product.category}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {filteredProducts.map((product) => (
+                <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
+                  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+                    {/* Product Image Placeholder */}
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <PackageIcon className="w-20 h-20 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                    </div>
+                    
+                    {/* Stock Badge */}
+                    <div className="absolute top-3 right-3">
+                      <span
+                        className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                          product.stock < lowStockThreshold
+                            ? 'bg-red-500 text-white'
+                            : 'bg-green-500 text-white'
+                        }`}
+                      >
+                        {product.stock} in stock
+                      </span>
+                    </div>
+
+                    {/* Category Badge */}
+                    <div className="absolute top-3 left-3">
+                      <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-medium shadow-sm">
+                        {product.category}
+                      </span>
+                    </div>
+
+                    {/* Action Buttons Overlay */}
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleEdit(product)}
+                        className="bg-white hover:bg-gray-100"
+                      >
+                        <Edit className="w-4 h-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => handleDelete(product.id)}
+                        className="bg-red-500 hover:bg-red-600 text-white"
+                      >
+                        <Trash2 className="w-4 h-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </div>
+
+                  {/* Product Info */}
+                  <CardContent className="p-4">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-gray-900 text-lg truncate" title={product.name}>
+                        {product.name}
+                      </h3>
+                      
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500 font-mono">
+                          SKU: {product.sku}
                         </span>
-                      </TableCell>
-                      <TableCell className="text-right">{formatCurrency(Number(product.price))}</TableCell>
-                      <TableCell className="text-right">
-                        <span
-                          className={`px-2 py-1 rounded-md text-sm font-medium ${
-                            product.stock < lowStockThreshold
-                              ? 'bg-red-50 text-red-700'
-                              : 'bg-green-50 text-green-700'
-                          }`}
-                        >
-                          {product.stock}
-                        </span>
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(product)}
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(product.id)}
-                          >
-                            <Trash2 className="w-4 h-4 text-red-600" />
-                          </Button>
+                      </div>
+
+                      <div className="pt-2 border-t">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-600">Price</span>
+                          <span className="text-xl font-bold text-gray-900">
+                            {formatCurrency(Number(product.price))}
+                          </span>
                         </div>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
+                      </div>
+
+                      {product.stock < lowStockThreshold && (
+                        <div className="pt-2">
+                          <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
+                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                            </svg>
+                            <span className="text-xs font-medium">Low Stock Alert</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           )}
         </CardContent>
