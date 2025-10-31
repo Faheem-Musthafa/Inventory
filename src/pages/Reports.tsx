@@ -109,7 +109,7 @@ export function Reports() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bda15e]"></div>
       </div>
     );
   }
@@ -135,8 +135,8 @@ export function Reports() {
                 <p className="text-sm font-medium text-gray-600">Total Sales</p>
                 <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalSales)}</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-blue-600" />
+              <div className="p-3 bg-[#ccb88b] rounded-lg">
+                <DollarSign className="w-6 h-6 text-[#bda15e]" />
               </div>
             </div>
           </CardContent>
@@ -175,7 +175,7 @@ export function Reports() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
-              <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+              <div className="w-2 h-6 bg-gradient-to-b from-[#cfb579] to-purple-600 rounded-full"></div>
               Stock Value by Category
             </CardTitle>
           </CardHeader>
@@ -273,7 +273,7 @@ export function Reports() {
                 topProducts.map((product, index) => (
                   <div key={index} className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-semibold text-sm">
+                      <div className="w-8 h-8 rounded-full bg-[#f1e6bc] flex items-center justify-center text-[#b38d42] font-semibold text-sm">
                         {index + 1}
                       </div>
                       <span className="font-medium text-gray-900">{product.name}</span>

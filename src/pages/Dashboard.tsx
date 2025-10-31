@@ -159,7 +159,7 @@ export function Dashboard() {
         </div>
         <Button 
           onClick={() => setDialogOpen(true)}
-          className="bg-blue-600 hover:bg-blue-700"
+          className="bg-[#bda15e] hover:bg-[#b38d42]"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add New Product
@@ -168,11 +168,11 @@ export function Dashboard() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <Card className="bg-gradient-to-br from-blue-500 to-blue-600 text-white">
+        <Card className="bg-gradient-to-br from-[#cfb579] to-[#bda15e] text-white">
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-blue-100">Total Products</p>
+                <p className="text-sm font-medium text-[#f1e6bc]">Total Products</p>
                 <p className="text-3xl font-bold mt-2">{products.length}</p>
               </div>
               <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
@@ -261,7 +261,7 @@ export function Dashboard() {
         <CardContent className="p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bda15e]"></div>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
@@ -275,7 +275,7 @@ export function Dashboard() {
                   : 'Get started by adding your first product'}
               </p>
               {!searchQuery && categoryFilter === 'all' && (
-                <Button onClick={() => setDialogOpen(true)} className="bg-blue-600 hover:bg-blue-700">
+                <Button onClick={() => setDialogOpen(true)} className="bg-[#bda15e] hover:bg-[#b38d42]">
                   <Plus className="w-4 h-4 mr-2" />
                   Add Product
                 </Button>
@@ -316,7 +316,7 @@ export function Dashboard() {
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="text-gray-600 font-mono text-sm">{product.sku}</TableCell>
                       <TableCell>
-                        <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
+                        <span className="px-2 py-1 bg-[#f1e6bc] text-[#b38d42] rounded-md text-xs font-medium">
                           {product.category}
                         </span>
                       </TableCell>
@@ -324,7 +324,7 @@ export function Dashboard() {
                         {formatCurrency(product.price)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-bold">
+                        <span className="px-3 py-1 bg-[#f1e6bc] text-[#b38d42] rounded-md text-xs font-bold">
                           {product.sold_count || 0}
                         </span>
                       </TableCell>
@@ -334,7 +334,7 @@ export function Dashboard() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(product)}
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            className="text-[#bda15e] hover:text-[#b38d42] hover:bg-[#f8f1d8]"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>

@@ -81,13 +81,13 @@ export function Login({ onLogin }: LoginProps) {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-purple-50 p-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#ccb88b] via-white to-purple-50 p-4">
       <div className="w-full max-w-md">
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-xl p-8 space-y-6">
           {/* Header */}
           <div className="text-center space-y-2">
-            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl shadow-lg mb-4">
+            <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-[#d1b77c] to-[#cfb579] rounded-2xl shadow-lg mb-4">
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
@@ -109,7 +109,7 @@ export function Login({ onLogin }: LoginProps) {
                         <Input
                           type="email"
                           placeholder="admin@afonex.com"
-                          className="pl-11 h-12 bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          className="pl-11 h-12 bg-gray-50 border-gray-200 focus:border-[#cfb579] focus:ring-2 focus:ring-[#e8d9a3] transition-all"
                           {...field}
                         />
                       </div>
@@ -131,7 +131,7 @@ export function Login({ onLogin }: LoginProps) {
                         <Input
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Enter your password"
-                          className="pl-11 pr-11 h-12 bg-gray-50 border-gray-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
+                          className="pl-11 pr-11 h-12 bg-gray-50 border-gray-200 focus:border-[#cfb579] focus:ring-2 focus:ring-[#e8d9a3] transition-all"
                           {...field}
                         />
                         <button
@@ -155,7 +155,7 @@ export function Login({ onLogin }: LoginProps) {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                className="w-full h-12 bg-gradient-to-r from-[#cfb579] to-[#cfb579] hover:from-[#cfb579] hover:to-[#cfb579] text-white font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
               >
                 {isLoading ? (
                   <>
