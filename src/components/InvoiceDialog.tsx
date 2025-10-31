@@ -25,7 +25,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   storeEmail: 'admin@store.com',
   storeAddress: '123 Business Street, City, State 12345',
   storePhone: '(555) 123-4567',
-  currency: '₹',
+  currency: 'AED',
 };
 
 export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
@@ -63,7 +63,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
   };
 
   const formatCurrency = (amount: number) => {
-    return `$${amount.toFixed(2)}`;
+    return `${settings.currency} ${amount.toFixed(2)}`;
   };
 
   return (

@@ -27,7 +27,7 @@ const DEFAULT_SETTINGS: StoreSettings = {
   storeAddress: '123 Business Street, City, State 12345',
   storePhone: '(555) 123-4567',
   taxRate: 10,
-  currency: '₹',
+  currency: 'AED',
   lowStockAlerts: true,
   orderNotifications: true,
   dailyReports: false,
@@ -178,7 +178,7 @@ export function Settings() {
                   id="currency"
                   value={settings.currency}
                   onChange={(e) => handleInputChange('currency', e.target.value)}
-                  placeholder="₹, $, € etc."
+                  placeholder="AED, $, € etc."
                 />
               </div>
             </div>

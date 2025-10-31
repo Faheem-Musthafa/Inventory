@@ -13,10 +13,6 @@ interface StoreSettings {
   currency: string;
 }
 
-const DEFAULT_SETTINGS: StoreSettings = {
-  currency: '₹',
-};
-
 export function Reports() {
   const [totalSales, setTotalSales] = useState(0);
   const [totalOrders, setTotalOrders] = useState(0);
@@ -24,7 +20,9 @@ export function Reports() {
   const [categoryData, setCategoryData] = useState<Array<{ name: string; value: number }>>([]);
   const [topProducts, setTopProducts] = useState<Array<{ name: string; revenue: number }>>([]);
   const [loading, setLoading] = useState(true);
-  const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
+  const [settings, setSettings] = useState<StoreSettings>({
+    currency: 'AED',
+  });
 
   useEffect(() => {
     loadSettings();
@@ -36,7 +34,7 @@ export function Reports() {
       const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
       if (settingsDoc.exists()) {
         const data = settingsDoc.data();
-        setSettings({ currency: data.currency || '₹' });
+        setSettings({ currency: data.currency || 'AED' });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -44,7 +42,7 @@ export function Reports() {
   };
 
   const formatCurrency = (amount: number) => {
-    return `${settings.currency}${amount.toFixed(2)}`;
+    return `${settings.currency} ${amount.toFixed(2)}`;
   };
 
   const loadReports = async () => {

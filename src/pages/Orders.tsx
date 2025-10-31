@@ -22,7 +22,7 @@ interface StoreSettings {
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  currency: '₹',
+  currency: 'AED',
 };
 
 export function Orders() {
@@ -44,7 +44,7 @@ export function Orders() {
       const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
       if (settingsDoc.exists()) {
         const data = settingsDoc.data();
-        setSettings({ currency: data.currency || '₹' });
+        setSettings({ currency: data.currency || 'AED' });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -52,7 +52,7 @@ export function Orders() {
   };
 
   const formatCurrency = (amount: number) => {
-    return `${settings.currency}${amount.toFixed(2)}`;
+    return `${settings.currency} ${amount.toFixed(2)}`;
   };
 
   const loadOrders = async () => {

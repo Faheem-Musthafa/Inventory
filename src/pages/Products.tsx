@@ -32,7 +32,7 @@ export function Products() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [lowStockThreshold, setLowStockThreshold] = useState(10);
-  const [currencySymbol, setCurrencySymbol] = useState('₹');
+  const [currencySymbol, setCurrencySymbol] = useState('AED');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -47,7 +47,7 @@ export function Products() {
       if (docSnap.exists()) {
         const settings = docSnap.data();
         setLowStockThreshold(settings.lowStockThreshold || 10);
-        setCurrencySymbol(settings.currency || '₹');
+        setCurrencySymbol(settings.currency || 'AED');
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -55,7 +55,7 @@ export function Products() {
   };
 
   const formatCurrency = (amount: number) => {
-    return `${currencySymbol}${amount.toFixed(2)}`;
+    return `${currencySymbol} ${amount.toFixed(2)}`;
   };
 
   useEffect(() => {
@@ -199,7 +199,7 @@ export function Products() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Product Name</TableHead>
-                    <TableHead>SKU</TableHead>
+                    <TableHead>Product ID</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-right">Stock</TableHead>

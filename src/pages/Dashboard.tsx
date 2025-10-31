@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, ShoppingCart,Plus } from 'lucide-react';
+import { Package, ShoppingCart,Plus, DollarSign } from 'lucide-react';
 import { StatCard } from '@/components/StatCard';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,7 +21,7 @@ interface StoreSettings {
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
-  currency: '₹',
+  currency: 'AED',
 };
 
 export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }) {
@@ -45,7 +45,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
       const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
       if (settingsDoc.exists()) {
         const data = settingsDoc.data();
-        setSettings({ currency: data.currency || '₹' });
+        setSettings({ currency: data.currency || 'AED' });
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -53,7 +53,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
   };
 
   const formatCurrency = (amount: number) => {
-    return `${settings.currency}${amount.toFixed(2)}`;
+    return `${settings.currency} ${amount.toFixed(2)}`;
   };
 
   const loadDashboardData = async () => {
@@ -164,7 +164,7 @@ export function Dashboard({ onNavigate }: { onNavigate: (page: string) => void }
         <StatCard
           title="Stock Value"
           value={formatCurrency(stats.stockValue)}
-          icon={IndianRupee}
+          icon={DollarSign}
           // trend="+5% from last month"
           trendUp
         />

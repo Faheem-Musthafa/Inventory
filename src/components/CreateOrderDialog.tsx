@@ -58,6 +58,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
   const [taxRate, setTaxRate] = useState(0.1); // Default 10%
+  const [currency, setCurrency] = useState('AED');
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -84,6 +85,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       if (docSnap.exists()) {
         const settings = docSnap.data();
         setTaxRate((settings.taxRate || 10) / 100); // Convert percentage to decimal
+        setCurrency(settings.currency || 'AED');
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -290,7 +292,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
                   <SelectContent>
                     {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name} - ${Number(product.price).toFixed(2)} (Stock: {product.stock})
+                        {product.name} - {currency} {Number(product.price).toFixed(2)} (Stock: {product.stock})
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -335,10 +337,10 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
                         <td className="px-4 py-3 text-sm">{item.product_name}</td>
                         <td className="px-4 py-3 text-sm text-right">{item.quantity}</td>
                         <td className="px-4 py-3 text-sm text-right">
-                          ${item.price.toFixed(2)}
+                          {currency} {item.price.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-sm text-right font-medium">
-                          ${item.total.toFixed(2)}
+                          {currency} {item.total.toFixed(2)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <Button
@@ -361,15 +363,15 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${subtotal.toFixed(2)}</span>
+                  <span className="font-medium">{currency} {subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Tax ({(taxRate * 100).toFixed(1)}%)</span>
-                  <span className="font-medium">${tax.toFixed(2)}</span>
+                  <span className="font-medium">{currency} {tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total</span>
-                  <span>${total.toFixed(2)}</span>
+                  <span>{currency} {total.toFixed(2)}</span>
                 </div>
               </div>
             )}
