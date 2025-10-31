@@ -130,7 +130,7 @@ export function Orders() {
         <CardContent className="p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bda15e]"></div>
             </div>
           ) : orders.length === 0 ? (
             <div className="text-center py-12">
@@ -147,7 +147,6 @@ export function Orders() {
                 <TableHeader>
                   <TableRow>
                     <TableHead>Date</TableHead>
-                    <TableHead>Customer</TableHead>
                     <TableHead>Items</TableHead>
                     <TableHead>Payment Mode</TableHead>
                     <TableHead>Status</TableHead>
@@ -161,7 +160,6 @@ export function Orders() {
                       <TableCell className="text-gray-600">
                         {format(new Date(order.created_at), 'MMM dd, yyyy')}
                       </TableCell>
-                      <TableCell className="font-medium">{order.customer_name}</TableCell>
                       <TableCell className="text-gray-600">
                         {order.order_items.length} items
                       </TableCell>

@@ -282,7 +282,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
                 <span style={{ fontWeight: '500' }}>{formatCurrency(Number(order.subtotal))}</span>
               </div>
               <div className="total-row">
-                <span>Tax</span>
+                <span>Vat</span>
                 <span style={{ fontWeight: '500' }}>{formatCurrency(Number(order.tax))}</span>
               </div>
               <div className="total-row final">
@@ -371,7 +371,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
                 <span className="font-medium">{formatCurrency(Number(order.subtotal))}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Tax</span>
+                <span className="text-gray-600">Vat</span>
                 <span className="font-medium">{formatCurrency(Number(order.tax))}</span>
               </div>
               <div className="flex justify-between text-lg font-bold border-t pt-2">

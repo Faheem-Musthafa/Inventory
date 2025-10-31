@@ -28,6 +28,7 @@ export interface Product {
   category: string;
   price: number;
   stock: number;
+  sold_count: number; // Track how many items have been sold
   image_url?: string;
   created_at: string;
   updated_at: string;

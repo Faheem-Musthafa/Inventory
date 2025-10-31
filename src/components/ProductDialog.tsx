@@ -29,7 +29,6 @@ const formSchema = z.object({
   sku: z.string().min(1, 'SKU is required'),
   category: z.string().min(1, 'Category is required'),
   price: z.string().min(0, 'Price must be positive'),
-  stock: z.string().min(0, 'Stock must be positive'),
   image_url: z.string().optional(),
 });
 
@@ -55,7 +54,6 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
       sku: '',
       category: '',
       price: '0',
-      stock: '0',
       image_url: '',
     },
   });
@@ -67,7 +65,6 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
         sku: product.sku,
         category: product.category,
         price: product.price.toString(),
-        stock: product.stock.toString(),
         image_url: product.image_url || '',
       });
       setImagePreview(product.image_url || '');
@@ -78,7 +75,6 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
         sku: '',
         category: '',
         price: '0',
-        stock: '0',
         image_url: '',
       });
       setImagePreview('');
@@ -153,7 +149,6 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
         sku: data.sku,
         category: data.category,
         price: parseFloat(data.price),
-        stock: parseInt(data.stock),
         image_url: imageUrl,
         updated_at: new Date().toISOString(),
       };
@@ -165,6 +160,8 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
       } else {
         await addDoc(collection(db, 'products'), {
           ...productData,
+          stock: 999999, // Set unlimited stock for new products
+          sold_count: 0, // Initialize sold count for new products
           created_at: new Date().toISOString(),
         });
         toast({ title: 'Product created successfully' });
@@ -233,34 +230,19 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
                 )}
               />
             </div>
-            <div className="grid grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="price"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Price</FormLabel>
-                    <FormControl>
-                      <Input type="number" step="0.01" placeholder="0.00" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="stock"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Stock</FormLabel>
-                    <FormControl>
-                      <Input type="number" placeholder="0" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+            <FormField
+              control={form.control}
+              name="price"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Price</FormLabel>
+                  <FormControl>
+                    <Input type="number" step="0.01" placeholder="0.00" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="image_url"

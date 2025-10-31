@@ -31,8 +31,9 @@ import { db, type Product } from '@/lib/firebase';
 import { collection, getDocs, addDoc, updateDoc, doc, getDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
+
+// ✅ Updated schema — no customer name required
 const formSchema = z.object({
-  customer_name: z.string().min(1, 'Customer name is required'),
   payment_mode: z.string().min(1, 'Payment mode is required'),
 });
 
@@ -57,14 +58,13 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
   const [selectedProduct, setSelectedProduct] = useState<string>('');
   const [quantity, setQuantity] = useState<number>(1);
-  const [taxRate, setTaxRate] = useState(0.1); // Default 10%
+  const [taxRate, setTaxRate] = useState(0.1);
   const [currency, setCurrency] = useState('AED');
   const { toast } = useToast();
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      customer_name: '',
       payment_mode: 'Cash',
     },
   });
@@ -84,7 +84,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       const docSnap = await getDoc(docRef);
       if (docSnap.exists()) {
         const settings = docSnap.data();
-        setTaxRate((settings.taxRate || 10) / 100); // Convert percentage to decimal
+        setTaxRate((settings.taxRate || 10) / 100);
         setCurrency(settings.currency || 'AED');
       }
     } catch (error) {
@@ -94,19 +94,16 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
 
   const loadProducts = async () => {
     try {
-      // Fetch all products and filter in memory to avoid composite index requirement
       const querySnapshot = await getDocs(collection(db, 'products'));
-      const productsData = querySnapshot.docs
-        .map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Product[];
-      
-      // Filter products with stock > 0 and sort by name
+      const productsData = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data(),
+      })) as Product[];
+
       const filteredProducts = productsData
         .filter(p => p.stock > 0)
         .sort((a, b) => a.name.localeCompare(b.name));
-      
+
       setProducts(filteredProducts);
     } catch (error) {
       console.error('Error loading products:', error);
@@ -116,7 +113,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   const addItem = () => {
     if (!selectedProduct) return;
 
-    const product = products.find((p) => p.id === selectedProduct);
+    const product = products.find(p => p.id === selectedProduct);
     if (!product) return;
 
     if (quantity > product.stock) {
@@ -128,7 +125,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       return;
     }
 
-    const existingItem = orderItems.find((item) => item.product_id === selectedProduct);
+    const existingItem = orderItems.find(item => item.product_id === selectedProduct);
     if (existingItem) {
       if (existingItem.quantity + quantity > product.stock) {
         toast({
@@ -138,17 +135,16 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
         });
         return;
       }
-      setOrderItems(
-        orderItems.map((item) =>
-          item.product_id === selectedProduct
-            ? {
-                ...item,
-                quantity: item.quantity + quantity,
-                total: (item.quantity + quantity) * item.price,
-              }
-            : item
-        )
-      );
+
+      setOrderItems(orderItems.map(item =>
+        item.product_id === selectedProduct
+          ? {
+              ...item,
+              quantity: item.quantity + quantity,
+              total: (item.quantity + quantity) * item.price,
+            }
+          : item
+      ));
     } else {
       setOrderItems([
         ...orderItems,
@@ -167,7 +163,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
   };
 
   const removeItem = (productId: string) => {
-    setOrderItems(orderItems.filter((item) => item.product_id !== productId));
+    setOrderItems(orderItems.filter(item => item.product_id !== productId));
   };
 
   const subtotal = orderItems.reduce((sum, item) => sum + item.total, 0);
@@ -185,9 +181,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
     }
 
     try {
-      // Create order
       const orderData = {
-        customer_name: data.customer_name,
         payment_mode: data.payment_mode,
         payment_status: 'Paid',
         subtotal,
@@ -198,26 +192,23 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
 
-      // Create order items
-      const items = orderItems.map((item) => ({
-        order_id: orderRef.id,
-        product_id: item.product_id,
-        product_name: item.product_name,
-        quantity: item.quantity,
-        price: item.price,
-        total: item.total,
-      }));
-
-      for (const item of items) {
-        await addDoc(collection(db, 'order_items'), item);
-      }
-
-      // Update product stock
       for (const item of orderItems) {
-        const product = products.find((p) => p.id === item.product_id);
+        await addDoc(collection(db, 'order_items'), {
+          order_id: orderRef.id,
+          product_id: item.product_id,
+          product_name: item.product_name,
+          quantity: item.quantity,
+          price: item.price,
+          total: item.total,
+        });
+
+        // Update product stock and increment sold count
+        const product = products.find(p => p.id === item.product_id);
         if (product) {
+          const currentSoldCount = product.sold_count || 0;
           await updateDoc(doc(db, 'products', item.product_id), {
             stock: product.stock - item.quantity,
+            sold_count: currentSoldCount + item.quantity,
           });
         }
       }
@@ -238,50 +229,36 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
       <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create New Order</DialogTitle>
-          <DialogDescription>
-            Select products to create a new order
-          </DialogDescription>
+          <DialogDescription>Select products to create a new order</DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              {/* <FormField
-                control={form.control}
-                name="customer_name"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Customer Name</FormLabel>
+            {/* Payment Mode */}
+            <FormField
+              control={form.control}
+              name="payment_mode"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Payment Mode</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <Input placeholder="Enter customer name" {...field} />
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment mode" />
+                      </SelectTrigger>
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              /> */}
-              <FormField
-                control={form.control}
-                name="payment_mode"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Payment Mode</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
-                      <FormControl>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select payment mode" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="Cash">Cash</SelectItem>
-                        <SelectItem value="UPI">UPI</SelectItem>
-                        <SelectItem value="Card">Card</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
+                    <SelectContent>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="UPI">UPI</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
 
+            {/* Add Products */}
             <div className="space-y-4">
               <FormLabel>Add Products</FormLabel>
               <div className="flex gap-2">
@@ -290,7 +267,7 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
                     <SelectValue placeholder="Select product" />
                   </SelectTrigger>
                   <SelectContent>
-                    {products.map((product) => (
+                    {products.map(product => (
                       <SelectItem key={product.id} value={product.id}>
                         {product.name} - {currency} {Number(product.price).toFixed(2)} (Stock: {product.stock})
                       </SelectItem>
@@ -311,28 +288,21 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
               </div>
             </div>
 
+            {/* Items Table */}
             {orderItems.length > 0 && (
               <div className="border rounded-lg overflow-hidden">
                 <table className="w-full">
                   <thead className="bg-gray-50">
                     <tr>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">
-                        Product
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                        Qty
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                        Price
-                      </th>
-                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">
-                        Total
-                      </th>
+                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-700">Product</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Qty</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Price</th>
+                      <th className="px-4 py-3 text-right text-sm font-medium text-gray-700">Total</th>
                       <th className="px-4 py-3"></th>
                     </tr>
                   </thead>
                   <tbody className="divide-y">
-                    {orderItems.map((item) => (
+                    {orderItems.map(item => (
                       <tr key={item.product_id}>
                         <td className="px-4 py-3 text-sm">{item.product_name}</td>
                         <td className="px-4 py-3 text-sm text-right">{item.quantity}</td>
@@ -359,23 +329,33 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
               </div>
             )}
 
+            {/* Summary */}
             {orderItems.length > 0 && (
               <div className="bg-gray-50 rounded-lg p-4 space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">{currency} {subtotal.toFixed(2)}</span>
+                  <span className="font-medium">
+                    {currency} {subtotal.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-600">Tax ({(taxRate * 100).toFixed(1)}%)</span>
-                  <span className="font-medium">{currency} {tax.toFixed(2)}</span>
+                  <span className="text-gray-600">
+                    Tax ({(taxRate * 100).toFixed(1)}%)
+                  </span>
+                  <span className="font-medium">
+                    {currency} {tax.toFixed(2)}
+                  </span>
                 </div>
                 <div className="flex justify-between text-lg font-bold border-t pt-2">
                   <span>Total</span>
-                  <span>{currency} {total.toFixed(2)}</span>
+                  <span>
+                    {currency} {total.toFixed(2)}
+                  </span>
                 </div>
               </div>
             )}
 
+            {/* Buttons */}
             <div className="flex justify-end gap-3 pt-4">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
