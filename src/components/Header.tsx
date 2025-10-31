@@ -20,7 +20,7 @@ interface HeaderProps {
 export function Header({ onLogout }: HeaderProps) {
   const [storeInfo, setStoreInfo] = useState({
     storeName: 'Afonex',
-    storeEmail: 'admin@afonex.com',
+    storeEmail: 'developer@afonex.com',
   });
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -43,7 +43,7 @@ export function Header({ onLogout }: HeaderProps) {
         const settings = docSnap.data();
         setStoreInfo({
           storeName: settings.storeName || 'Afonex',
-          storeEmail: settings.storeEmail || 'admin@afonex.com',
+          storeEmail: settings.storeEmail || 'developer@afonex.com',
         });
       }
     } catch (error) {
@@ -83,8 +83,9 @@ export function Header({ onLogout }: HeaderProps) {
             {/* Notifications */}
             <Button 
               variant="ghost" 
+              disabled
               size="icon" 
-              className="relative rounded-full hover:bg-blue-50 transition-colors"
+              className="relative rounded-full hover:bg-[#ccb88b]  transition-colors"
             >
               <Bell className="w-5 h-5 text-gray-600" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
@@ -96,13 +97,13 @@ export function Header({ onLogout }: HeaderProps) {
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200 hover:border-blue-300 transition-all cursor-pointer">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200 hover:border-[#e5d39b] transition-all cursor-pointer">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#cfb579] to-[#bda15e] flex items-center justify-center text-white font-semibold text-sm shadow-md">
                     <User className="w-5 h-5" />
                   </div>
                   <div className="hidden md:block">
                     <p className="text-sm font-semibold text-gray-900">{storeInfo.storeName}</p>
-                    <p className="text-xs text-gray-500">Admin</p>
+                    <p className="text-xs text-gray-500">Staff</p>
                   </div>
                   <Menu className="w-4 h-4 text-gray-400 hidden md:block" />
                 </div>
