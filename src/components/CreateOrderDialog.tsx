@@ -202,11 +202,13 @@ export function CreateOrderDialog({ open, onClose, onSuccess }: CreateOrderDialo
           total: item.total,
         });
 
-        // Update product stock
+        // Update product stock and increment sold count
         const product = products.find(p => p.id === item.product_id);
         if (product) {
+          const currentSoldCount = product.sold_count || 0;
           await updateDoc(doc(db, 'products', item.product_id), {
             stock: product.stock - item.quantity,
+            sold_count: currentSoldCount + item.quantity,
           });
         }
       }

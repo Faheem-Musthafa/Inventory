@@ -1,30 +1,30 @@
 import { useEffect, useState } from 'react';
-import { Plus, Search, Edit, Trash2, Package as PackageIcon } from 'lucide-react';
+import { Plus, Wine, UtensilsCrossed, Pizza, Soup, Fish, Package, ShoppingCart, Minus, Trash2, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { db, type Product } from '@/lib/firebase';
-import { collection, getDocs, deleteDoc, doc as firestoreDoc, orderBy, query, getDoc } from 'firebase/firestore';
+import { collection, getDocs, doc as firestoreDoc, orderBy, query, getDoc, addDoc, updateDoc } from 'firebase/firestore';
 import { ProductDialog } from '@/components/ProductDialog';
 import { useToast } from '@/hooks/use-toast';
+
+interface CartItem {
+  product: Product;
+  quantity: number;
+}
 
 export function Products() {
   const [products, setProducts] = useState<Product[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [lowStockThreshold, setLowStockThreshold] = useState(10);
   const [currencySymbol, setCurrencySymbol] = useState('AED');
+  const [cart, setCart] = useState<CartItem[]>([]);
+  const [showCart, setShowCart] = useState(false);
+  const [taxRate, setTaxRate] = useState(0.1);
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -40,6 +40,7 @@ export function Products() {
         const settings = docSnap.data();
         setLowStockThreshold(settings.lowStockThreshold || 10);
         setCurrencySymbol(settings.currency || 'AED');
+        setTaxRate((settings.taxRate || 10) / 100);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -56,7 +57,7 @@ export function Products() {
 
   useEffect(() => {
     filterProducts();
-  }, [products, searchQuery, categoryFilter]);
+  }, [products, categoryFilter]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -82,14 +83,6 @@ export function Products() {
   const filterProducts = () => {
     let filtered = products;
 
-    if (searchQuery) {
-      filtered = filtered.filter(
-        (p) =>
-          p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.sku.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-
     if (categoryFilter !== 'all') {
       filtered = filtered.filter((p) => p.category === categoryFilter);
     }
@@ -97,26 +90,7 @@ export function Products() {
     setFilteredProducts(filtered);
   };
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
 
-    try {
-      await deleteDoc(firestoreDoc(db, 'products', id));
-      toast({ title: 'Product deleted successfully' });
-      loadProducts();
-    } catch (error: any) {
-      toast({
-        title: 'Error deleting product',
-        description: error.message,
-        variant: 'destructive',
-      });
-    }
-  };
-
-  const handleEdit = (product: Product) => {
-    setEditingProduct(product);
-    setDialogOpen(true);
-  };
 
   const handleDialogClose = () => {
     setDialogOpen(false);
@@ -128,164 +102,451 @@ export function Products() {
     handleDialogClose();
   };
 
+  // Cart Functions
+  const addToCart = (product: Product) => {
+    if (product.stock <= 0) {
+      toast({
+        title: 'Out of stock',
+        description: 'This item is currently unavailable',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    const existingItem = cart.find(item => item.product.id === product.id);
+    
+    if (existingItem) {
+      if (existingItem.quantity >= product.stock) {
+        toast({
+          title: 'Stock limit reached',
+          description: `Only ${product.stock} available`,
+          variant: 'destructive',
+        });
+        return;
+      }
+      setCart(cart.map(item =>
+        item.product.id === product.id
+          ? { ...item, quantity: item.quantity + 1 }
+          : item
+      ));
+    } else {
+      setCart([...cart, { product, quantity: 1 }]);
+    }
+    
+    toast({
+      title: 'Added to order',
+      description: `${product.name} added to your order`,
+    });
+  };
+
+  const updateCartQuantity = (productId: string, newQuantity: number) => {
+    if (newQuantity <= 0) {
+      removeFromCart(productId);
+      return;
+    }
+
+    const item = cart.find(item => item.product.id === productId);
+    if (item && newQuantity > item.product.stock) {
+      toast({
+        title: 'Stock limit',
+        description: `Only ${item.product.stock} available`,
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setCart(cart.map(item =>
+      item.product.id === productId
+        ? { ...item, quantity: newQuantity }
+        : item
+    ));
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCart(cart.filter(item => item.product.id !== productId));
+  };
+
+  const clearCart = () => {
+    setCart([]);
+  };
+
+  const cartSubtotal = cart.reduce((sum, item) => sum + (item.product.price * item.quantity), 0);
+  const cartTax = cartSubtotal * taxRate;
+  const cartTotal = cartSubtotal + cartTax;
+  const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  const submitOrder = async () => {
+    if (cart.length === 0) {
+      toast({
+        title: 'Cart is empty',
+        description: 'Please add items to your order',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setIsSubmittingOrder(true);
+    try {
+      // Create order
+      const orderData = {
+        payment_mode: 'Cash', // Default, can be changed in dialog
+        payment_status: 'Paid',
+        subtotal: cartSubtotal,
+        tax: cartTax,
+        total: cartTotal,
+        created_at: new Date().toISOString(),
+      };
+
+      const orderRef = await addDoc(collection(db, 'orders'), orderData);
+
+      // Add order items and update stock
+      for (const item of cart) {
+        await addDoc(collection(db, 'order_items'), {
+          order_id: orderRef.id,
+          product_id: item.product.id,
+          product_name: item.product.name,
+          quantity: item.quantity,
+          price: item.product.price,
+          total: item.product.price * item.quantity,
+        });
+
+        // Update product stock and increment sold count
+        const currentSoldCount = item.product.sold_count || 0;
+        await updateDoc(firestoreDoc(db, 'products', item.product.id), {
+          stock: item.product.stock - item.quantity,
+          sold_count: currentSoldCount + item.quantity,
+        });
+      }
+
+      toast({
+        title: 'Order placed successfully!',
+        description: `Order #${orderRef.id.slice(-6)} has been created`,
+      });
+
+      clearCart();
+      setShowCart(false);
+      loadProducts(); // Refresh products to show updated stock
+    } catch (error: any) {
+      toast({
+        title: 'Error placing order',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmittingOrder(false);
+    }
+  };
+
   const categories = Array.from(new Set(products.map((p) => p.category)));
 
+  const categoryIcons: Record<string, any> = {
+    'Bar': Wine,
+    'Food': UtensilsCrossed,
+    'Wine': Wine,
+    'Soup': Soup,
+    'Pizzas': Pizza,
+    'Fish': Fish,
+  };
+
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Products</h1>
-          <p className="text-gray-500 mt-1">Manage your product inventory</p>
+    <div className="min-h-screen bg-gray-50 p-6 pb-24">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Category</h1>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="icon" 
+            className="rounded-full relative"
+            onClick={() => setShowCart(!showCart)}
+          >
+            <ShoppingCart className="w-5 h-5" />
+            {cartItemCount > 0 && (
+              <span className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">
+                {cartItemCount}
+              </span>
+            )}
+          </Button>
+          <Button 
+            size="icon" 
+            className="rounded-full bg-emerald-500 hover:bg-emerald-600"
+            onClick={() => setDialogOpen(true)}
+          >
+            <Plus className="w-5 h-5" />
+          </Button>
         </div>
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Product
-        </Button>
       </div>
 
-      <Card>
-        <CardContent className="p-6">
-          <div className="flex gap-4 mb-6">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <Input
-                type="search"
-                placeholder="Search by name or SKU..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="Filter by category" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                {categories.map((cat) => (
-                  <SelectItem key={cat} value={cat}>
-                    {cat}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+      {/* Category Filter */}
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
+        <button
+          onClick={() => setCategoryFilter('all')}
+          className={`flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 transition-all ${
+            categoryFilter === 'all'
+              ? 'bg-emerald-50 border-emerald-500'
+              : 'bg-white border-gray-200 hover:border-gray-300'
+          }`}
+        >
+          <Wine className="w-8 h-8 mb-2" />
+          <span className="text-xs font-medium">Bar</span>
+        </button>
 
-          {loading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-            </div>
-          ) : filteredProducts.length === 0 ? (
-            <div className="text-center py-12">
-              <PackageIcon className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-              <p className="text-gray-500 mb-4">Get started by adding your first product</p>
-              <Button onClick={() => setDialogOpen(true)}>
-                <Plus className="w-4 h-4 mr-2" />
-                Add Product
+        {categories.map((cat) => {
+          const Icon = categoryIcons[cat] || UtensilsCrossed;
+          return (
+            <button
+              key={cat}
+              onClick={() => setCategoryFilter(cat)}
+              className={`flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 transition-all ${
+                categoryFilter === cat
+                  ? 'bg-emerald-50 border-emerald-500'
+                  : 'bg-white border-gray-200 hover:border-gray-300'
+              }`}
+            >
+              <Icon className="w-8 h-8 mb-2" />
+              <span className="text-xs font-medium">{cat}</span>
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Special Menu Section */}
+      <div className="mb-4">
+        <h2 className="text-xl font-bold text-gray-900">Special Menu for you</h2>
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        </div>
+      ) : filteredProducts.length === 0 ? (
+        <div className="text-center py-12">
+          <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
+          <p className="text-gray-500 mb-4">Get started by adding your first product</p>
+          <Button onClick={() => setDialogOpen(true)} className="bg-emerald-500 hover:bg-emerald-600">
+            <Plus className="w-4 h-4 mr-2" />
+            Add Product
+          </Button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {filteredProducts.map((product) => (
+            <Card 
+              key={product.id} 
+              className={`overflow-hidden border-2 transition-all hover:shadow-lg ${
+                product.stock < lowStockThreshold ? 'border-gray-200' : 'border-emerald-100'
+              }`}
+            >
+              <CardContent className="p-4">
+                {/* Product Image */}
+                <div className="relative w-full aspect-square mb-3 rounded-2xl overflow-hidden bg-gradient-to-br from-gray-100 to-gray-50">
+                  {product.image_url ? (
+                    <img 
+                      src={product.image_url} 
+                      alt={product.name}
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <Package className="w-16 h-16 text-gray-300" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Product Info */}
+                <div className="text-center mb-3">
+                  <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
+                    {product.name}
+                  </h3>
+                  <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                </div>
+
+                {/* Price */}
+                <div className="text-center mb-3">
+                  <p className="text-lg font-bold text-gray-900">
+                    {formatCurrency(product.price)}
+                  </p>
+                </div>
+
+                {/* Add Button */}
+                <Button 
+                  onClick={() => addToCart(product)}
+                  disabled={product.stock <= 0}
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white rounded-full h-11 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <Plus className="w-5 h-5 mr-2" />
+                  {product.stock <= 0 ? 'OUT OF STOCK' : 'ADD'}
+                </Button>
+
+                {/* Stock Info */}
+                <div className="mt-2 text-xs text-center">
+                  {product.stock < lowStockThreshold ? (
+                    <span className="text-red-600 font-medium">
+                      Low Stock: {product.stock} left
+                    </span>
+                  ) : (
+                    <span className="text-gray-500">
+                      Stock: {product.stock}
+                    </span>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {/* Cart Sidebar */}
+      {showCart && (
+        <div className="fixed inset-0 z-50 flex">
+          {/* Overlay */}
+          <div 
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setShowCart(false)}
+          />
+          
+          {/* Cart Panel */}
+          <div className="relative ml-auto w-full max-w-md bg-white shadow-2xl flex flex-col h-full">
+            {/* Cart Header */}
+            <div className="p-6 border-b flex items-center justify-between">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Current Order</h2>
+                <p className="text-sm text-gray-500">{cartItemCount} items</p>
+              </div>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowCart(false)}
+              >
+                <X className="w-6 h-6" />
               </Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {filteredProducts.map((product) => (
-                <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
-                  <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-                    {/* Product Image */}
-                    {product.image_url ? (
-                      <img 
-                        src={product.image_url} 
-                        alt={product.name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                      />
-                    ) : (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <PackageIcon className="w-20 h-20 text-gray-300 group-hover:text-gray-400 transition-colors" />
-                      </div>
-                    )}
-                    
-                    {/* Stock Badge */}
-                    <div className="absolute top-3 right-3">
-                      <span
-                        className={`px-3 py-1 rounded-full text-xs font-semibold shadow-sm ${
-                          product.stock < lowStockThreshold
-                            ? 'bg-red-500 text-white'
-                            : 'bg-green-500 text-white'
-                        }`}
-                      >
-                        {product.stock} in stock
-                      </span>
-                    </div>
 
-                    {/* Category Badge */}
-                    <div className="absolute top-3 left-3">
-                      <span className="px-3 py-1 bg-blue-500 text-white rounded-full text-xs font-medium shadow-sm">
-                        {product.category}
-                      </span>
-                    </div>
+            {/* Cart Items */}
+            <div className="flex-1 overflow-y-auto p-6">
+              {cart.length === 0 ? (
+                <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                  <ShoppingCart className="w-16 h-16 mb-4" />
+                  <p className="text-lg font-medium">Your cart is empty</p>
+                  <p className="text-sm">Add items to get started</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {cart.map((item) => (
+                    <Card key={item.product.id} className="overflow-hidden">
+                      <CardContent className="p-4">
+                        <div className="flex gap-4">
+                          {/* Item Image */}
+                          <div className="w-20 h-20 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
+                            {item.product.image_url ? (
+                              <img 
+                                src={item.product.image_url} 
+                                alt={item.product.name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full flex items-center justify-center">
+                                <Package className="w-8 h-8 text-gray-300" />
+                              </div>
+                            )}
+                          </div>
 
-                    {/* Action Buttons Overlay */}
-                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center gap-2">
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleEdit(product)}
-                        className="bg-white hover:bg-gray-100"
-                      >
-                        <Edit className="w-4 h-4 mr-1" />
-                        Edit
-                      </Button>
-                      <Button
-                        variant="secondary"
-                        size="sm"
-                        onClick={() => handleDelete(product.id)}
-                        className="bg-red-500 hover:bg-red-600 text-white"
-                      >
-                        <Trash2 className="w-4 h-4 mr-1" />
-                        Delete
-                      </Button>
-                    </div>
-                  </div>
+                          {/* Item Details */}
+                          <div className="flex-1 min-w-0">
+                            <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
+                              {item.product.name}
+                            </h3>
+                            <p className="text-emerald-600 font-bold text-lg mb-2">
+                              {formatCurrency(item.product.price)}
+                            </p>
 
-                  {/* Product Info */}
-                  <CardContent className="p-4">
-                    <div className="space-y-2">
-                      <h3 className="font-semibold text-gray-900 text-lg truncate" title={product.name}>
-                        {product.name}
-                      </h3>
-                      
-                      <div className="flex items-center justify-between">
-                        <span className="text-xs text-gray-500 font-mono">
-                          SKU: {product.sku}
-                        </span>
-                      </div>
+                            {/* Quantity Controls */}
+                            <div className="flex items-center gap-2">
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-12 text-center font-semibold">
+                                {item.quantity}
+                              </span>
+                              <Button
+                                size="icon"
+                                variant="outline"
+                                className="h-8 w-8 rounded-full"
+                                onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                                disabled={item.quantity >= item.product.stock}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                className="h-8 w-8 ml-auto text-red-500 hover:text-red-600 hover:bg-red-50"
+                                onClick={() => removeFromCart(item.product.id)}
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
 
-                      <div className="pt-2 border-t">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm text-gray-600">Price</span>
-                          <span className="text-xl font-bold text-gray-900">
-                            {formatCurrency(Number(product.price))}
-                          </span>
-                        </div>
-                      </div>
-
-                      {product.stock < lowStockThreshold && (
-                        <div className="pt-2">
-                          <div className="flex items-center gap-2 text-red-600 bg-red-50 px-3 py-2 rounded-lg">
-                            <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
-                            </svg>
-                            <span className="text-xs font-medium">Low Stock Alert</span>
+                          {/* Item Total */}
+                          <div className="text-right">
+                            <p className="font-bold text-gray-900">
+                              {formatCurrency(item.product.price * item.quantity)}
+                            </p>
                           </div>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </CardContent>
-      </Card>
+
+            {/* Cart Summary */}
+            {cart.length > 0 && (
+              <div className="border-t bg-gray-50 p-6">
+                <div className="space-y-3 mb-6">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span className="font-medium">{formatCurrency(cartSubtotal)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Tax ({(taxRate * 100).toFixed(1)}%)</span>
+                    <span className="font-medium">{formatCurrency(cartTax)}</span>
+                  </div>
+                  <div className="flex justify-between text-lg font-bold border-t pt-3">
+                    <span>Total</span>
+                    <span className="text-emerald-600">{formatCurrency(cartTotal)}</span>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Button
+                    onClick={submitOrder}
+                    disabled={isSubmittingOrder}
+                    className="w-full bg-emerald-500 hover:bg-emerald-600 text-white h-12 text-lg font-semibold rounded-full"
+                  >
+                    {isSubmittingOrder ? 'Processing...' : `Place Order • ${formatCurrency(cartTotal)}`}
+                  </Button>
+                  <Button
+                    onClick={clearCart}
+                    variant="outline"
+                    className="w-full"
+                  >
+                    Clear Cart
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       <ProductDialog
         open={dialogOpen}
