@@ -11,7 +11,7 @@ import { Login } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState('dashboard');
+  const [currentPage, setCurrentPage] = useState('products');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -54,10 +54,10 @@ function App() {
 
   const renderPage = () => {
     switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard />;
       case 'products':
         return <Products />;
+      case 'dashboard':
+        return <Dashboard />;
       case 'orders':
         return <Orders />;
       case 'reports':
@@ -65,7 +65,7 @@ function App() {
       case 'settings':
         return <Settings />;
       default:
-        return <Dashboard />;
+        return <Products />;
     }
   };
 
