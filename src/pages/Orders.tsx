@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Eye, Printer } from 'lucide-react';
+import { Plus, Printer } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import {
@@ -95,9 +95,17 @@ export function Orders() {
     }
   };
 
-  const handleViewInvoice = (order: OrderWithItems) => {
+
+  const handlePrint = (order: OrderWithItems) => {
     setSelectedOrder(order);
     setInvoiceDialogOpen(true);
+    // Trigger print after a short delay to allow dialog to open
+    setTimeout(() => {
+      const printButton = document.querySelector('[data-print-invoice]') as HTMLButtonElement;
+      if (printButton) {
+        printButton.click();
+      }
+    }, 500);
   };
 
   const handleCreateSuccess = () => {
@@ -172,20 +180,11 @@ export function Orders() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-2">
+                          
                           <Button
                             variant="ghost"
                             size="sm"
-                            onClick={() => handleViewInvoice(order)}
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => {
-                              setSelectedOrder(order);
-                              setTimeout(() => window.print(), 100);
-                            }}
+                            onClick={() => handlePrint(order)}
                           >
                             <Printer className="w-4 h-4" />
                           </Button>

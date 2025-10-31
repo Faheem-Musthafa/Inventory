@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase';
 import { collection, getDocs, query, where, doc, getDoc } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { format, subDays } from 'date-fns';
-import { IndianRupee, TrendingUp } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 
 interface DashboardStats {
   totalProducts: number;
