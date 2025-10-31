@@ -190,10 +190,18 @@ export function Products() {
               {filteredProducts.map((product) => (
                 <Card key={product.id} className="group hover:shadow-lg transition-all duration-300 overflow-hidden">
                   <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-                    {/* Product Image Placeholder */}
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <PackageIcon className="w-20 h-20 text-gray-300 group-hover:text-gray-400 transition-colors" />
-                    </div>
+                    {/* Product Image */}
+                    {product.image_url ? (
+                      <img 
+                        src={product.image_url} 
+                        alt={product.name}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                      />
+                    ) : (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <PackageIcon className="w-20 h-20 text-gray-300 group-hover:text-gray-400 transition-colors" />
+                      </div>
+                    )}
                     
                     {/* Stock Badge */}
                     <div className="absolute top-3 right-3">
