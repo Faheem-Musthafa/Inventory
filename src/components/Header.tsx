@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Bell, Menu, User, TrendingUp, Calendar, LogOut } from 'lucide-react';
+import { MailQuestion, Menu, User, TrendingUp, Calendar, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -61,7 +61,7 @@ export function Header({ onLogout }: HeaderProps) {
           <div className="flex items-center gap-6">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
-                Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}! 👋
+                Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}! 
               </h1>
               <div className="flex items-center gap-4 mt-1">
                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -87,7 +87,7 @@ export function Header({ onLogout }: HeaderProps) {
               size="icon" 
               className="relative rounded-full hover:bg-[#ccb88b]  transition-colors"
             >
-              <Bell className="w-5 h-5 text-gray-600" />
+              <MailQuestion className="w-5 h-5 text-gray-600" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </Button>
 

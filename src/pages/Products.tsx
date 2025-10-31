@@ -257,6 +257,7 @@ export function Products() {
           <h1 className="text-2xl font-bold text-gray-900">Category</h1>
           <Button 
             size="icon" 
+            disabled
             className="rounded-full bg-[#c7a956] hover:bg-[#bc994e]"
             onClick={() => setDialogOpen(true)}
           >
@@ -317,7 +318,7 @@ export function Products() {
             </Button>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {filteredProducts.map((product) => (
             <Card 
               key={product.id} 
@@ -371,6 +372,8 @@ export function Products() {
 
       {/* Cart Sidebar - Always Visible */}
       <div className="w-96 bg-white border-l shadow-xl flex flex-col h-screen fixed top-0 right-0">
+        <div className='py-4 h-20'>
+        </div>
         {/* Cart Header */}
         <div className="px-6 pt-6 pb-4 border-b">
           <div className="flex items-center gap-2 mb-2">
