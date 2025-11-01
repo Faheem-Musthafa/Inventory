@@ -9,28 +9,28 @@ import { Reports } from '@/pages/Reports';
 import { Settings } from '@/pages/Settings';
 import { Login } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
+import { isAuthenticated, clearCurrentUser, getCurrentUser, isStaff } from '@/lib/auth';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('products');
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthenticatedState, setIsAuthenticatedState] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   // Check authentication status on mount
   useEffect(() => {
-    const authStatus = localStorage.getItem('isAuthenticated');
-    setIsAuthenticated(authStatus === 'true');
+    const authStatus = isAuthenticated();
+    setIsAuthenticatedState(authStatus);
     setIsLoading(false);
   }, []);
 
   const handleLogin = () => {
-    setIsAuthenticated(true);
+    setIsAuthenticatedState(true);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('isAuthenticated');
-    localStorage.removeItem('userEmail');
-    setIsAuthenticated(false);
-    setCurrentPage('dashboard');
+    clearCurrentUser();
+    setIsAuthenticatedState(false);
+    setCurrentPage('products');
   };
 
   // Show loading state
@@ -43,7 +43,7 @@ function App() {
   }
 
   // Show login page if not authenticated
-  if (!isAuthenticated) {
+  if (!isAuthenticatedState) {
     return (
       <>
         <Login onLogin={handleLogin} />
@@ -53,6 +53,16 @@ function App() {
   }
 
   const renderPage = () => {
+    const currentUser = getCurrentUser();
+    const userIsStaff = isStaff(currentUser);
+
+    // Staff access control - only allow products, orders, and settings
+    if (userIsStaff && !['products', 'orders', 'settings'].includes(currentPage)) {
+      // Redirect staff to products if they try to access restricted pages
+      setCurrentPage('products');
+      return <Products />;
+    }
+
     switch (currentPage) {
       case 'products':
         return <Products />;

@@ -3,6 +3,7 @@ import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings } from 'luc
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
+import { getCurrentUser, isStaff } from '@/lib/auth';
 
 interface SidebarProps {
   currentPage: string;
@@ -19,6 +20,8 @@ const navigation = [
 
 export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
   const [storeName, setStoreName] = useState('InventoryPro');
+  const currentUser = getCurrentUser();
+  const userIsStaff = isStaff(currentUser);
 
   useEffect(() => {
     loadStoreName();
@@ -54,6 +57,11 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
 
       <nav className="flex-1 py-6 px-3">
         {navigation.map((item) => {
+          // Filter navigation for staff - only show Menu (products), Orders, and Settings
+          if (userIsStaff && !['products', 'orders', 'settings'].includes(item.id)) {
+            return null;
+          }
+
           const Icon = item.icon;
           const isActive = currentPage === item.id;
 

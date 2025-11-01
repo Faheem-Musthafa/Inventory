@@ -59,3 +59,13 @@ export interface OrderItem {
 export interface OrderWithItems extends Order {
   order_items: OrderItem[];
 }
+
+// User Roles
+export type UserRole = 'manager' | 'staff';
+
+export interface User {
+  email: string;
+  role: UserRole;
+  name?: string;
+}
+

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { LogIn, Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Lock, Mail, Shield, Users } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -14,6 +14,7 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { useToast } from '@/hooks/use-toast';
+import { validateCredentials, saveCurrentUser } from '@/lib/auth';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -43,19 +44,18 @@ export function Login({ onLogin }: LoginProps) {
     setIsLoading(true);
 
     try {
-      // Get credentials from environment variables
-      const validEmail = import.meta.env.VITE_ADMIN_EMAIL;
-      const validPassword = import.meta.env.VITE_ADMIN_PASSWORD;
+      // Validate credentials and get user info
+      const user = validateCredentials(data.email, data.password);
 
-      // Validate credentials
-      if (data.email === validEmail && data.password === validPassword) {
-        // Store auth state in localStorage
-        localStorage.setItem('isAuthenticated', 'true');
-        localStorage.setItem('userEmail', data.email);
+      if (user) {
+        // Save user to localStorage
+        saveCurrentUser(user);
+        
+        const roleLabel = user.role === 'manager' ? 'Manager' : 'Staff';
         
         toast({
           title: 'Login successful!',
-          description: 'Welcome back to Afonex Inventory',
+          description: `Welcome ${roleLabel}, ${user.name}`,
         });
 
         // Call onLogin callback
@@ -92,6 +92,18 @@ export function Login({ onLogin }: LoginProps) {
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
             <p className="text-gray-500">Sign in to access Afonex Inventory</p>
+            
+            {/* Role Badges */}
+            <div className="flex items-center justify-center gap-2 pt-2">
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-medium">
+                <Shield className="w-3.5 h-3.5" />
+                <span>Manager</span>
+              </div>
+              <div className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 text-green-700 rounded-full text-xs font-medium">
+                <Users className="w-3.5 h-3.5" />
+                <span>Staff</span>
+              </div>
+            </div>
           </div>
 
           {/* Login Form */}

@@ -19,6 +19,7 @@ export function Products() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [subCategoryFilter, setSubCategoryFilter] = useState('all');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [currencySymbol, setCurrencySymbol] = useState('AED');
@@ -59,7 +60,7 @@ export function Products() {
 
   useEffect(() => {
     filterProducts();
-  }, [products, categoryFilter]);
+  }, [products, categoryFilter, subCategoryFilter]);
 
   const loadProducts = async () => {
     setLoading(true);
@@ -89,7 +90,16 @@ export function Products() {
       filtered = filtered.filter((p) => p.category === categoryFilter);
     }
 
+    if (subCategoryFilter !== 'all') {
+      filtered = filtered.filter((p) => p.subCategory === subCategoryFilter);
+    }
+
     setFilteredProducts(filtered);
+  };
+
+  const handleCategoryChange = (category: string) => {
+    setCategoryFilter(category);
+    setSubCategoryFilter('all'); // Reset subcategory when category changes
   };
 
 
@@ -239,6 +249,15 @@ export function Products() {
   };
 
   const categories = Array.from(new Set(products.map((p) => p.category)));
+  
+  // Get subcategories for the selected category
+  const subCategories = categoryFilter !== 'all' 
+    ? Array.from(new Set(
+        products
+          .filter(p => p.category === categoryFilter && p.subCategory)
+          .map(p => p.subCategory!)
+      ))
+    : [];
 
   const categoryIcons: Record<string, any> = {
     'Bar': Wine,
@@ -261,7 +280,7 @@ export function Products() {
         {/* Category Filter */}
         <div className="flex gap-3 mb-6 overflow-x-auto pb-2">
         <button
-          onClick={() => setCategoryFilter('all')}
+          onClick={() => handleCategoryChange('all')}
           className={`flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 transition-all ${
             categoryFilter === 'all'
               ? 'bg-[#f8f1d8] border-[#c7a956]'
@@ -277,7 +296,7 @@ export function Products() {
           return (
             <button
               key={cat}
-              onClick={() => setCategoryFilter(cat)}
+              onClick={() => handleCategoryChange(cat)}
               className={`flex-shrink-0 flex flex-col items-center justify-center w-24 h-24 rounded-2xl border-2 transition-all ${
                 categoryFilter === cat
                   ? 'bg-[#f8f1d8] border-[#c7a956]'
@@ -290,6 +309,38 @@ export function Products() {
           );
         })}
         </div>
+
+        {/* SubCategory Filter - Show only when a category is selected */}
+        {subCategories.length > 0 && (
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold text-gray-900 mb-3">Select SubCategory</h2>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <button
+                onClick={() => setSubCategoryFilter('all')}
+                className={`flex-shrink-0 px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                  subCategoryFilter === 'all'
+                    ? 'bg-[#f8f1d8] border-[#c7a956] text-gray-900'
+                    : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                All {categoryFilter}
+              </button>
+              {subCategories.map((subCat) => (
+                <button
+                  key={subCat}
+                  onClick={() => setSubCategoryFilter(subCat)}
+                  className={`flex-shrink-0 px-4 py-2 rounded-full border-2 text-sm font-medium transition-all ${
+                    subCategoryFilter === subCat
+                      ? 'bg-[#f8f1d8] border-[#c7a956] text-gray-900'
+                      : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  {subCat}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Special Menu Section */}
         <div className="mb-4">
@@ -339,6 +390,9 @@ export function Products() {
                     {product.name}
                   </h3>
                   <p className="text-xs text-gray-500">product_id: {product.product_id}</p>
+                  {product.subCategory && (
+                    <p className="text-xs text-gray-400 mt-1">{product.subCategory}</p>
+                  )}
                 </div>
 
                 {/* Price */}
@@ -410,6 +464,9 @@ export function Products() {
                             <h3 className="font-semibold text-gray-900 text-sm mb-1 truncate">
                               {item.product.name}
                             </h3>
+                            {item.product.subCategory && (
+                              <p className="text-xs text-gray-400 mb-1">{item.product.subCategory}</p>
+                            )}
                             <p className="text-[#bc994e] font-bold text-lg mb-2">
                               {formatCurrency(item.product.price)}
                             </p>
