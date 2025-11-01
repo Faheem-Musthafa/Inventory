@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { LogIn, Eye, EyeOff, Lock, Mail, Shield, Users } from 'lucide-react';
+import { LogIn, Eye, EyeOff, Lock, Mail, Shield, Users, UserCircle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -13,8 +13,16 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
 import { useToast } from '@/hooks/use-toast';
 import { validateCredentials, saveCurrentUser } from '@/lib/auth';
+import type { User } from '@/lib/firebase';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email address'),
@@ -30,6 +38,9 @@ interface LoginProps {
 export function Login({ onLogin }: LoginProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [showNameDialog, setShowNameDialog] = useState(false);
+  const [pendingUser, setPendingUser] = useState<User | null>(null);
+  const [staffName, setStaffName] = useState('');
   const { toast } = useToast();
 
   const form = useForm<FormData>({
@@ -48,26 +59,33 @@ export function Login({ onLogin }: LoginProps) {
       const user = validateCredentials(data.email, data.password);
 
       if (user) {
-        // Save user to localStorage
-        saveCurrentUser(user);
-        
-        const roleLabel = user.role === 'manager' ? 'Manager' : 'Staff';
-        
-        toast({
-          title: 'Login successful!',
-          description: `Welcome ${roleLabel}, ${user.name}`,
-        });
+        // If user is staff, show name dialog
+        if (user.role === 'staff') {
+          setPendingUser(user);
+          setShowNameDialog(true);
+          setIsLoading(false);
+        } else {
+          // Manager - proceed directly
+          saveCurrentUser(user);
+          
+          toast({
+            title: 'Login successful!',
+            description: `Welcome Manager, ${user.name}`,
+          });
 
-        // Call onLogin callback
-        setTimeout(() => {
-          onLogin();
-        }, 500);
+          // Call onLogin callback
+          setTimeout(() => {
+            onLogin();
+          }, 500);
+          setIsLoading(false);
+        }
       } else {
         toast({
           title: 'Invalid credentials',
           description: 'Please check your email and password',
           variant: 'destructive',
         });
+        setIsLoading(false);
       }
     } catch (error) {
       toast({
@@ -75,8 +93,38 @@ export function Login({ onLogin }: LoginProps) {
         description: 'An error occurred. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleStaffNameSubmit = () => {
+    if (!staffName.trim()) {
+      toast({
+        title: 'Name required',
+        description: 'Please enter your name to continue',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (pendingUser) {
+      // Update user with custom name
+      const updatedUser = {
+        ...pendingUser,
+        name: staffName.trim(),
+      };
+
+      saveCurrentUser(updatedUser);
+      
+      toast({
+        title: 'Login successful!',
+        description: `Welcome ${staffName.trim()}!`,
+      });
+
+      // Call onLogin callback
+      setTimeout(() => {
+        onLogin();
+      }, 500);
     }
   };
 
@@ -202,6 +250,63 @@ export function Login({ onLogin }: LoginProps) {
           </p>
         </div>
       </div>
+
+      {/* Staff Name Dialog */}
+      <Dialog open={showNameDialog} onOpenChange={setShowNameDialog}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCircle className="w-6 h-6 text-[#cfb579]" />
+              Welcome, Staff Member!
+            </DialogTitle>
+            <DialogDescription>
+              Please enter your name to continue
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 pt-4">
+            <div className="space-y-2">
+              <label htmlFor="staffName" className="text-sm font-medium text-gray-700">
+                Your Name
+              </label>
+              <Input
+                id="staffName"
+                type="text"
+                placeholder="Enter your name"
+                value={staffName}
+                onChange={(e) => setStaffName(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleStaffNameSubmit();
+                  }
+                }}
+                className="h-12 bg-gray-50 border-gray-200 focus:border-[#cfb579] focus:ring-2 focus:ring-[#e8d9a3]"
+                autoFocus
+              />
+            </div>
+            <div className="flex gap-3">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setShowNameDialog(false);
+                  setStaffName('');
+                  setPendingUser(null);
+                }}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="button"
+                onClick={handleStaffNameSubmit}
+                className="flex-1 bg-gradient-to-r from-[#cfb579] to-[#cfb579] hover:from-[#bc994e] hover:to-[#bc994e] text-white"
+              >
+                Continue
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

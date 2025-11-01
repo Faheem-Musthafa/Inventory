@@ -5,13 +5,16 @@ This application now includes a role-based authentication system with two user t
 ## User Roles
 
 ### Manager
-- Full access to all features
-- Can manage products, orders, settings, and reports
+- **Full access to all features**
+- Can access: Menu (Products), Orders, Dashboard, Reports, Settings
+- Can manage products, orders, settings, and view analytics
 - Icon: Shield (🛡️)
 - Badge Color: Blue
 
 ### Staff
-- Limited access based on business requirements
+- **Limited access - operational pages only**
+- Can access: Menu (Products), Orders, Settings
+- Cannot access: Dashboard, Reports
 - Can take orders and manage day-to-day operations
 - Icon: Users (👥)
 - Badge Color: Green
@@ -65,10 +68,14 @@ VITE_STAFF_PASSWORDS=password1,password2,password3
 - **Staff 1:**
   - Email: staff1@afonex.com
   - Password: staff123
+  - Name: Will be asked at login
   
 - **Staff 2:**
   - Email: staff2@afonex.com
   - Password: staff456
+  - Name: Will be asked at login
+
+**Note:** Staff members must enter their name each time they log in. This allows for flexible identification and tracking of who is using each staff account.
 
 ## Features
 
@@ -78,6 +85,10 @@ VITE_STAFF_PASSWORDS=password1,password2,password3
 - Password visibility toggle
 - Form validation with error messages
 - Welcome message with user role upon successful login
+- **Staff Name Dialog**: Staff members are prompted to enter their name upon login
+  - Custom name entry for each login session
+  - Name is displayed in header and throughout the application
+  - Press Enter or click Continue to proceed
 
 ### Header Component
 - Displays logged-in user's name
@@ -85,11 +96,15 @@ VITE_STAFF_PASSWORDS=password1,password2,password3
 - Role badge in dropdown menu
 - User email displayed in profile dropdown
 
-### Authentication
+### Authentication & Access Control
 - Secure credential validation
 - localStorage-based session management
 - Automatic authentication check on app load
-- Role-based access control ready for implementation
+- **Role-based access control implemented:**
+  - Sidebar navigation filtered by role
+  - Route protection in App.tsx
+  - Staff automatically redirected from restricted pages
+  - Manager has full access to all features
 
 ## Security Notes
 
@@ -182,10 +197,35 @@ isAuthenticated(): boolean
 2. Check that `getCurrentUser()` returns valid user object
 3. Inspect localStorage for `currentUser` key
 
+## Access Control Implementation
+
+### Staff Restrictions
+Staff users are restricted to the following pages:
+- ✅ **Menu (Products)** - Take orders, view products
+- ✅ **Orders** - Manage and view orders
+- ✅ **Settings** - Configure store settings
+
+Staff users **CANNOT** access:
+- ❌ **Dashboard** - Analytics and statistics (Manager only)
+- ❌ **Reports** - Business reports and insights (Manager only)
+
+### Manager Access
+Managers have unrestricted access to all pages:
+- ✅ Menu (Products)
+- ✅ Orders
+- ✅ Dashboard
+- ✅ Reports
+- ✅ Settings
+
+### Implementation Details
+1. **Sidebar Filtering** - Navigation items are filtered based on user role
+2. **Route Protection** - App.tsx checks role before rendering pages
+3. **Automatic Redirect** - Staff attempting to access restricted pages are redirected to Menu
+
 ## Future Enhancements
 
-- [ ] Role-based route protection
-- [ ] Staff permission levels
+- [x] Role-based route protection ✅
+- [ ] Staff permission levels (read-only, read-write)
 - [ ] Activity logging per user
 - [ ] Password change functionality
 - [ ] Two-factor authentication

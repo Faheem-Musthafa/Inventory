@@ -58,7 +58,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <nav className="flex-1 py-6 px-3">
         {navigation.map((item) => {
           // Filter navigation for staff - only show Menu (products), Orders, and Settings
-          if (userIsStaff && !['products', 'orders', 'settings'].includes(item.id)) {
+          if (userIsStaff && !['products', 'orders', 'dashboard'].includes(item.id)) {
             return null;
           }
 

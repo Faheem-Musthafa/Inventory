@@ -250,6 +250,7 @@ export function Orders() {
                     <TableHead>Date</TableHead>
                     <TableHead>Time</TableHead>
                     <TableHead>Items</TableHead>
+                    <TableHead>Staff</TableHead>
                     <TableHead>Payment Mode</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead className="text-right">Total</TableHead>
@@ -277,6 +278,13 @@ export function Orders() {
                           <span className="text-xs text-gray-500">
                             {order.order_items.map(item => item.product_name).join(', ').substring(0, 30)}
                             {order.order_items.map(item => item.product_name).join(', ').length > 30 ? '...' : ''}
+                          </span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-medium text-sm">
+                            {order.staff_name || 'N/A'}
                           </span>
                         </div>
                       </TableCell>

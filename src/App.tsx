@@ -57,7 +57,7 @@ function App() {
     const userIsStaff = isStaff(currentUser);
 
     // Staff access control - only allow products, orders, and settings
-    if (userIsStaff && !['products', 'orders', 'settings'].includes(currentPage)) {
+    if (userIsStaff && !['products', 'orders', 'dashboard'].includes(currentPage)) {
       // Redirect staff to products if they try to access restricted pages
       setCurrentPage('products');
       return <Products />;

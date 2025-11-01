@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Plus, Wine, UtensilsCrossed, Pizza, Soup, Fish, Package, ShoppingCart, Minus, Trash2 } from 'lucide-react';
+import { Plus, Wine, UtensilsCrossed, Pizza, Soup, Fish, Package, ShoppingCart, Minus, Trash2, CreditCard, Banknote } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { db, type Product } from '@/lib/firebase';
@@ -8,6 +8,7 @@ import { ProductDialog } from '@/components/ProductDialog';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { useToast } from '@/hooks/use-toast';
 import type { OrderWithItems } from '@/lib/firebase';
+import { getCurrentUser } from '@/lib/auth';
 
 interface CartItem {
   product: Product;
@@ -28,7 +29,7 @@ export function Products() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OrderWithItems | null>(null);
-  const [isPaid, setIsPaid] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
   const { toast } = useToast();
 
   useEffect(() => {
@@ -172,15 +173,20 @@ export function Products() {
 
     setIsSubmittingOrder(true);
     try {
+      // Get current user for staff name
+      const currentUser = getCurrentUser();
+      const staffName = currentUser?.name || 'Unknown';
+
       // Create order
       const orderData = {
-        payment_mode: 'Cash', // Default, can be changed in dialog
-        payment_status: isPaid ? 'Paid' : 'Pending',
+        payment_mode: paymentMethod, // Use selected payment method (Cash or Card)
+        payment_status: 'Pending',
         subtotal: cartSubtotal,
         tax: cartTax,
         total: cartTotal,
         created_at: new Date().toISOString(),
         customer_name: 'Walk-in Customer', // Default customer name
+        staff_name: staffName, // Add staff name who took the order
       };
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
@@ -535,29 +541,33 @@ export function Products() {
                   </div>
                 </div>
 
-                {/* Payment Status Toggle */}
+                {/* Payment Method Selection */}
                 <div className="mb-4 p-3 bg-white rounded-lg border">
-                  <p className="text-sm font-medium text-gray-700 mb-2">Payment Status</p>
+                  <p className="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
                   <div className="flex gap-2">
                     <Button
                       type="button"
-                      variant={isPaid ? "default" : "outline"}
-                      className={`flex-1 ${isPaid ? 'bg-green-600 hover:bg-green-700' : ''}`}
-                      onClick={() => setIsPaid(true)}
+                      variant={paymentMethod === 'Cash' ? "default" : "outline"}
+                      className={`flex-1 flex items-center justify-center gap-2 ${paymentMethod === 'Cash' ? 'bg-gray-900 hover:bg-gray-950' : ''}`}
+                      onClick={() => setPaymentMethod('Cash')}
                     >
-                      Paid
+                      <Banknote className="w-4 h-4" />
+                      Cash
                     </Button>
                     <Button
                       type="button"
-                      variant={!isPaid ? "default" : "outline"}
-                      className={`flex-1 ${!isPaid ? 'bg-orange-600 hover:bg-orange-700' : ''}`}
-                      onClick={() => setIsPaid(false)}
+                      variant={paymentMethod === 'Card' ? "default" : "outline"}
+                      className={`flex-1 flex items-center justify-center gap-2 ${paymentMethod === 'Card' ? 'bg-gray-900 hover:bg-gray-950' : ''}`}
+                      onClick={() => setPaymentMethod('Card')}
                     >
-                      Not Paid
+                      <CreditCard className="w-4 h-4" />
+                      Card
                     </Button>
                   </div>
                 </div>
 
+                {/* Payment Status Toggle */}
+               
                 <div className="space-y-2">
                   <Button
                     onClick={submitOrder}

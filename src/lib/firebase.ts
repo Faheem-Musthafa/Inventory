@@ -38,6 +38,7 @@ export interface Product {
 export interface Order {
   id: string;
   customer_name: string;
+  staff_name?: string;
   payment_mode: string;
   payment_status: string;
   subtotal: number;
