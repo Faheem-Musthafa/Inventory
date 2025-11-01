@@ -8,29 +8,31 @@ import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
 
 interface StoreSettings {
+  logo: string;
+  companyName: string;
   storeName: string;
   storeEmail: string;
   storeAddress: string;
   storePhone: string;
+  trnCode: string;
+  staffName: string;
+  instagramHandle: string;
   taxRate: number;
   currency: string;
-  lowStockAlerts: boolean;
-  orderNotifications: boolean;
-  dailyReports: boolean;
-  lowStockThreshold: number;
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
+  logo: 'JAMES',
+  companyName: 'JAMES CAFE LTD',
   storeName: 'InventoryPro',
   storeEmail: 'admin@store.com',
-  storeAddress: '123 Business Street, City, State 12345',
-  storePhone: '(555) 123-4567',
-  taxRate: 10,
+  storeAddress: 'Shams Boutique - Al Reem Island - Abu Dhabi',
+  storePhone: '028869949',
+  trnCode: '100569844200003',
+  staffName: 'Daniel',
+  instagramHandle: '@jamescafe.ae',
+  taxRate: 5,
   currency: 'AED',
-  lowStockAlerts: true,
-  orderNotifications: true,
-  dailyReports: false,
-  lowStockThreshold: 10,
 };
 
 export function Settings() {
@@ -109,46 +111,85 @@ export function Settings() {
       <div className="grid gap-6">
         <Card>
           <CardHeader>
-            <CardTitle>Store Information</CardTitle>
+            <CardTitle>Invoice Information</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="store-name">Store Name</Label>
-                <Input
-                  id="store-name"
-                  value={settings.storeName}
-                  onChange={(e) => handleInputChange('storeName', e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="store-email">Email</Label>
-                <Input
-                  id="store-email"
-                  type="email"
-                  value={settings.storeEmail}
-                  onChange={(e) => handleInputChange('storeEmail', e.target.value)}
-                />
-              </div>
-            </div>
             <div className="space-y-2">
-              <Label htmlFor="store-address">Address</Label>
+              <Label htmlFor="logo">Logo / Brand Name</Label>
+              <Input
+                id="logo"
+                value={settings.logo}
+                onChange={(e) => handleInputChange('logo', e.target.value)}
+                placeholder="JAMES"
+              />
+              <p className="text-xs text-gray-500">Main logo or brand name shown at top of receipt</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="company-name">Company Name</Label>
+              <Input
+                id="company-name"
+                value={settings.companyName}
+                onChange={(e) => handleInputChange('companyName', e.target.value)}
+                placeholder="JAMES CAFE LTD"
+              />
+              <p className="text-xs text-gray-500">Full legal company name</p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="store-address">Company Address</Label>
               <Input
                 id="store-address"
                 value={settings.storeAddress}
                 onChange={(e) => handleInputChange('storeAddress', e.target.value)}
+                placeholder="Shams Boutique - Al Reem Island - Abu Dhabi"
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="store-phone">Phone</Label>
-              <Input
-                id="store-phone"
-                value={settings.storePhone}
-                onChange={(e) => handleInputChange('storePhone', e.target.value)}
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="store-phone">Phone Number</Label>
+                <Input
+                  id="store-phone"
+                  value={settings.storePhone}
+                  onChange={(e) => handleInputChange('storePhone', e.target.value)}
+                  placeholder="028869949"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="trn-code">TRN Code</Label>
+                <Input
+                  id="trn-code"
+                  value={settings.trnCode}
+                  onChange={(e) => handleInputChange('trnCode', e.target.value)}
+                  placeholder="100569844200003"
+                />
+              </div>
             </div>
-            <Button onClick={saveSettings} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="staff-name">Default Staff Name</Label>
+                <Input
+                  id="staff-name"
+                  value={settings.staffName}
+                  onChange={(e) => handleInputChange('staffName', e.target.value)}
+                  placeholder="Daniel"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="instagram-handle">Instagram Handle</Label>
+                <Input
+                  id="instagram-handle"
+                  value={settings.instagramHandle}
+                  onChange={(e) => handleInputChange('instagramHandle', e.target.value)}
+                  placeholder="@jamescafe.ae"
+                />
+              </div>
+            </div>
+
+            <Button onClick={saveSettings} disabled={saving} >
+              {saving ? 'Saving...' : 'Save Invoice Settings'}
             </Button>
           </CardContent>
         </Card>
