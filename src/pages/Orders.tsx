@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Printer, Search, Eye } from 'lucide-react';
+import { Printer, Search, Eye, Edit } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -22,8 +22,10 @@ import { Badge } from '@/components/ui/badge';
 import { db, type OrderWithItems } from '@/lib/firebase';
 import { collection, getDocs, query, orderBy, where, doc, getDoc, updateDoc } from 'firebase/firestore';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
+import { EditOrderDialog } from '@/components/EditOrderDialog';
 import { useToast } from '@/hooks/use-toast';
 import { format } from 'date-fns';
+import { getCurrentUser, isManager } from '@/lib/auth';
 
 interface StoreSettings {
   currency: string;
@@ -39,11 +41,14 @@ export function Orders() {
   const [loading, setLoading] = useState(true);
   const [selectedOrder, setSelectedOrder] = useState<OrderWithItems | null>(null);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [settings, setSettings] = useState<StoreSettings>(DEFAULT_SETTINGS);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
   const { toast } = useToast();
+  const currentUser = getCurrentUser();
+  const userIsManager = isManager(currentUser);
 
   useEffect(() => {
     loadSettings();
@@ -164,6 +169,11 @@ export function Orders() {
   const handleViewInvoice = (order: OrderWithItems) => {
     setSelectedOrder(order);
     setInvoiceDialogOpen(true);
+  };
+
+  const handleEditOrder = (order: OrderWithItems) => {
+    setSelectedOrder(order);
+    setEditDialogOpen(true);
   };
 
   const handlePrint = (order: OrderWithItems) => {
@@ -319,6 +329,17 @@ export function Orders() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
+                          {userIsManager && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEditOrder(order)}
+                              title="Edit Order"
+                              className="h-8 w-8 p-0 text-black hover:text-black hover:bg-[#f8f1d8]"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                          )}
                           <Button
                             variant="ghost"
                             size="sm"
@@ -352,6 +373,14 @@ export function Orders() {
         open={invoiceDialogOpen}
         onClose={() => setInvoiceDialogOpen(false)}
         order={selectedOrder}
+      />
+
+      <EditOrderDialog
+        open={editDialogOpen}
+        onClose={() => setEditDialogOpen(false)}
+        onSuccess={loadOrders}
+        order={selectedOrder}
+        currencySymbol={settings.currency}
       />
     </div>
   );
