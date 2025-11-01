@@ -397,7 +397,7 @@ export function Products() {
                   <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-500">product_id: {product.product_id}</p>
+                  
                   {product.subCategory && (
                     <p className="text-xs text-gray-400 mt-1">{product.subCategory}</p>
                   )}
@@ -435,11 +435,12 @@ export function Products() {
 
       {/* Cart Sidebar/Drawer - Responsive */}
       <div className={cn(
-        "w-full sm:w-96 bg-white shadow-xl flex flex-col h-screen fixed top-0 right-0 z-50 transition-transform duration-300",
+        "w-full sm:w-96 bg-white shadow-xl flex flex-col fixed right-0 z-50 transition-transform duration-300",
+        "top-0 h-screen lg:top-16 lg:h-[calc(100vh-4rem)]",
         "lg:translate-x-0 lg:border-l",
         cartDrawerOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}>
-        <div className='py-4 h-16 sm:h-20'>
+        <div className='py-4 h-16 sm:h-20 lg:hidden'>
         </div>
         {/* Cart Header */}
         <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
