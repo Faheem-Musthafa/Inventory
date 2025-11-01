@@ -117,7 +117,6 @@ export function Settings() {
             <div className="space-y-2">
               <Label htmlFor="logo">Brand Name</Label>
               <Input
-                disabled
                 id="logo"
                 value={settings.logo}
                 onChange={(e) => handleInputChange('logo', e.target.value)}
@@ -129,7 +128,6 @@ export function Settings() {
             <div className="space-y-2">
               <Label htmlFor="company-name">Company Name</Label>
               <Input
-                disabled
                 id="company-name"
                 value={settings.companyName}
                 onChange={(e) => handleInputChange('companyName', e.target.value)}
@@ -142,7 +140,6 @@ export function Settings() {
               <Label htmlFor="store-address">Company Address</Label>
               <Input
                 id="store-address"
-                disabled
                 value={settings.storeAddress}
                 onChange={(e) => handleInputChange('storeAddress', e.target.value)}
                 placeholder="Shams Boutique - Al Reem Island - Abu Dhabi"
@@ -153,7 +150,6 @@ export function Settings() {
               <div className="space-y-2">
                 <Label htmlFor="store-phone">Phone Number</Label>
                 <Input
-                  disabled
                   id="store-phone"
                   value={settings.storePhone}
                   onChange={(e) => handleInputChange('storePhone', e.target.value)}
@@ -163,7 +159,6 @@ export function Settings() {
               <div className="space-y-2">
                 <Label htmlFor="trn-code">TRN Code</Label>
                 <Input
-                  disabled
                   id="trn-code"
                   value={settings.trnCode}
                   onChange={(e) => handleInputChange('trnCode', e.target.value)}
@@ -185,7 +180,6 @@ export function Settings() {
               <div className="space-y-2">
                 <Label htmlFor="instagram-handle">Instagram Handle</Label>
                 <Input
-                  disabled
                   id="instagram-handle"
                   value={settings.instagramHandle}
                   onChange={(e) => handleInputChange('instagramHandle', e.target.value)}
@@ -211,7 +205,6 @@ export function Settings() {
                 <Input
                   id="tax-rate"
                   type="number"
-                  disabled
                   min="0"
                   max="100"
                   step="0.1"
@@ -223,7 +216,6 @@ export function Settings() {
                 <Label htmlFor="currency">Currency</Label>
                 <Input
                   id="currency"
-                  disabled
                   value={settings.currency}
                   onChange={(e) => handleInputChange('currency', e.target.value)}
                   placeholder="AED, $, € etc."

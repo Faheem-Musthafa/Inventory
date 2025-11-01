@@ -436,12 +436,10 @@ export function Products() {
       {/* Cart Sidebar/Drawer - Responsive */}
       <div className={cn(
         "w-full sm:w-96 bg-white shadow-xl flex flex-col fixed right-0 z-50 transition-transform duration-300",
-        "top-0 h-screen lg:top-16 lg:h-[calc(100vh-4rem)]",
+        "top-0 h-screen lg:top-[88px] lg:h-[calc(100vh-88px)]",
         "lg:translate-x-0 lg:border-l",
         cartDrawerOpen ? "translate-x-0" : "translate-x-full lg:translate-x-0"
       )}>
-        <div className='py-4 h-16 sm:h-20 lg:hidden'>
-        </div>
         {/* Cart Header */}
         <div className="px-4 sm:px-6 pt-4 sm:pt-6 pb-3 sm:pb-4 border-b">
           <div className="flex items-center justify-between mb-2">
