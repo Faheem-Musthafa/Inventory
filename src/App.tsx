@@ -9,6 +9,9 @@ import { Settings } from '@/pages/Settings';
 import { Login } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
 import { isAuthenticated, clearCurrentUser, getCurrentUser, isStaff } from '@/lib/auth';
+import { SpeedInsights } from '@vercel/speed-insights/react';
+
+
 
 function App() {
   const [currentPage, setCurrentPage] = useState('products');
@@ -98,6 +101,7 @@ function App() {
         </main>
       </div>
       <Toaster />
+      <SpeedInsights />
     </div>
   );
 }
