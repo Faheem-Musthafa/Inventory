@@ -24,8 +24,9 @@ export const auth = getAuth(app);
 export interface Product {
   id: string;
   name: string;
-  sku: string;
+  product_id: string;
   category: string;
+  subCategory?: string;
   price: number;
   stock: number;
   sold_count: number; // Track how many items have been sold

@@ -4,7 +4,7 @@ A modern, full-featured inventory management system built with React, TypeScript
 
 ## Features
 
-- 📦 **Product Management** - Add, edit, delete products with SKU tracking
+- 📦 **Product Management** - Add, edit, delete products with product_id tracking
 - 🛒 **Order Management** - Create orders with automatic stock deduction
 - 📊 **Reports & Analytics** - Sales reports, top products, and category insights
 - 🧾 **Invoice Generation** - Print-ready invoices for orders
@@ -86,7 +86,7 @@ src/
 ### Collections
 
 #### `products`
-- Product inventory with SKU, category, price, and stock tracking
+- Product inventory with product_id, category, price, and stock tracking
 
 #### `orders`
 - Customer orders with payment information and totals

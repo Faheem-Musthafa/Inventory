@@ -99,7 +99,7 @@ export function Dashboard() {
       filtered = filtered.filter(
         (p) =>
           p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          p.product_id.toLowerCase().includes(searchQuery.toLowerCase()) ||
           p.category.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
@@ -207,7 +207,7 @@ export function Dashboard() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search by name, SKU, or category..."
+                placeholder="Search by name, product_id, or category..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
@@ -262,7 +262,7 @@ export function Dashboard() {
                   <TableRow className="bg-gray-50">
                     <TableHead className="w-20">Image</TableHead>
                     <TableHead>Product Name</TableHead>
-                    <TableHead>SKU</TableHead>
+                    <TableHead>product_id</TableHead>
                     <TableHead>Category</TableHead>
                     <TableHead className="text-right">Price</TableHead>
                     <TableHead className="text-center">Sold</TableHead>
@@ -288,7 +288,7 @@ export function Dashboard() {
                         </div>
                       </TableCell>
                       <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-gray-600 font-mono text-sm">{product.sku}</TableCell>
+                      <TableCell className="text-gray-600 font-mono text-sm">{product.product_id}</TableCell>
                       <TableCell>
                         <span className="px-2 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-medium">
                           {product.category}

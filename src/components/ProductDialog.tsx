@@ -26,8 +26,9 @@ import { useToast } from '@/hooks/use-toast';
 
 const formSchema = z.object({
   name: z.string().min(1, 'Product name is required'),
-  sku: z.string().min(1, 'SKU is required'),
+  product_id: z.string().min(1, 'product_id is required'),
   category: z.string().min(1, 'Category is required'),
+  subCategory: z.string().min(1, 'Subcategory is required'),
   price: z.string().min(0, 'Price must be positive'),
   image_url: z.string().optional(),
 });
@@ -51,8 +52,9 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: '',
-      sku: '',
+      product_id: '',
       category: '',
+      subCategory: '',
       price: '0',
       image_url: '',
     },
@@ -62,8 +64,9 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
     if (product) {
       form.reset({
         name: product.name,
-        sku: product.sku,
+        product_id: product.product_id,
         category: product.category,
+        subCategory: product.subCategory || '',
         price: product.price.toString(),
         image_url: product.image_url || '',
       });
@@ -72,8 +75,9 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
     } else {
       form.reset({
         name: '',
-        sku: '',
+        product_id: '',
         category: '',
+        subCategory: '',
         price: '0',
         image_url: '',
       });
@@ -146,8 +150,9 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
 
       const productData = {
         name: data.name,
-        sku: data.sku,
+        product_id: data.product_id,
         category: data.category,
+        subCategory: data.subCategory || null,
         price: parseFloat(data.price),
         image_url: imageUrl,
         updated_at: new Date().toISOString(),
@@ -205,12 +210,12 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
             <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
-                name="sku"
+                name="product_id"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>SKU</FormLabel>
+                    <FormLabel>product_id</FormLabel>
                     <FormControl>
-                      <Input placeholder="SKU-001" {...field} />
+                      <Input placeholder="product_id-001" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -223,13 +228,26 @@ export function ProductDialog({ open, onClose, onSuccess, product }: ProductDial
                   <FormItem>
                     <FormLabel>Category</FormLabel>
                     <FormControl>
-                      <Input placeholder="Electronics" {...field} />
+                      <Input placeholder="Food, Bar, etc." {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
             </div>
+            <FormField
+              control={form.control}
+              name="subCategory"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Sub Category</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Tea, Coffee, etc." {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
             <FormField
               control={form.control}
               name="price"

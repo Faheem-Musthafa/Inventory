@@ -346,7 +346,7 @@ export function Products() {
                   <h3 className="font-semibold text-gray-900 text-sm mb-1 line-clamp-2">
                     {product.name}
                   </h3>
-                  <p className="text-xs text-gray-500">SKU: {product.sku}</p>
+                  <p className="text-xs text-gray-500">product_id: {product.product_id}</p>
                 </div>
 
                 {/* Price */}
