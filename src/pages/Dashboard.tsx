@@ -147,7 +147,6 @@ export function Dashboard() {
 
   const categories = Array.from(new Set(products.map((p) => p.category)));
   const totalSoldItems = products.reduce((sum, p) => sum + (p.sold_count || 0), 0);
-  const totalRevenue = products.reduce((sum, p) => sum + (p.price * (p.sold_count || 0)), 0);
 
   return (
     <div className="space-y-6">
@@ -196,19 +195,7 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-500 to-green-600 text-white">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-green-100">Total Revenue</p>
-                <p className="text-3xl font-bold mt-2">{formatCurrency(totalRevenue)}</p>
-              </div>
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        
 
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
           <CardContent className="p-6">

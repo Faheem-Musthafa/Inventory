@@ -27,6 +27,7 @@ export function Products() {
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
   const [invoiceDialogOpen, setInvoiceDialogOpen] = useState(false);
   const [completedOrder, setCompletedOrder] = useState<OrderWithItems | null>(null);
+  const [isPaid, setIsPaid] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -164,7 +165,7 @@ export function Products() {
       // Create order
       const orderData = {
         payment_mode: 'Cash', // Default, can be changed in dialog
-        payment_status: 'Paid',
+        payment_status: isPaid ? 'Paid' : 'Pending',
         subtotal: cartSubtotal,
         tax: cartTax,
         total: cartTotal,
@@ -482,6 +483,29 @@ export function Products() {
                   <div className="flex justify-between text-lg font-bold border-t pt-3">
                     <span>Total</span>
                     <span className="text-[#bc994e]">{formatCurrency(cartTotal)}</span>
+                  </div>
+                </div>
+
+                {/* Payment Status Toggle */}
+                <div className="mb-4 p-3 bg-white rounded-lg border">
+                  <p className="text-sm font-medium text-gray-700 mb-2">Payment Status</p>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={isPaid ? "default" : "outline"}
+                      className={`flex-1 ${isPaid ? 'bg-green-600 hover:bg-green-700' : ''}`}
+                      onClick={() => setIsPaid(true)}
+                    >
+                      Paid
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={!isPaid ? "default" : "outline"}
+                      className={`flex-1 ${!isPaid ? 'bg-orange-600 hover:bg-orange-700' : ''}`}
+                      onClick={() => setIsPaid(false)}
+                    >
+                      Not Paid
+                    </Button>
                   </div>
                 </div>
 

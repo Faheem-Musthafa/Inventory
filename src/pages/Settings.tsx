@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Switch } from '@/components/ui/switch';
 import { db } from '@/lib/firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { useToast } from '@/hooks/use-toast';
@@ -188,80 +187,8 @@ export function Settings() {
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Inventory Settings</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="low-stock-threshold">Low Stock Threshold</Label>
-              <Input
-                id="low-stock-threshold"
-                type="number"
-                min="0"
-                value={settings.lowStockThreshold}
-                onChange={(e) =>
-                  handleInputChange('lowStockThreshold', parseInt(e.target.value) || 0)
-                }
-              />
-              <p className="text-sm text-gray-500">
-                Products with stock below this number will be highlighted
-              </p>
-            </div>
-            <Button onClick={saveSettings} disabled={saving}>
-              {saving ? 'Saving...' : 'Save Changes'}
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Notifications</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Low Stock Alerts</p>
-                <p className="text-sm text-gray-500">
-                  Get notified when products are running low
-                </p>
-              </div>
-              <Switch
-                checked={settings.lowStockAlerts}
-                onCheckedChange={(checked) => {
-                  handleInputChange('lowStockAlerts', checked);
-                  saveSettings();
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Order Notifications</p>
-                <p className="text-sm text-gray-500">Receive alerts for new orders</p>
-              </div>
-              <Switch
-                checked={settings.orderNotifications}
-                onCheckedChange={(checked) => {
-                  handleInputChange('orderNotifications', checked);
-                  saveSettings();
-                }}
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="font-medium">Daily Reports</p>
-                <p className="text-sm text-gray-500">Get daily sales summary via email</p>
-              </div>
-              <Switch
-                checked={settings.dailyReports}
-                onCheckedChange={(checked) => {
-                  handleInputChange('dailyReports', checked);
-                  saveSettings();
-                }}
-              />
-            </div>
-          </CardContent>
-        </Card>
+        
+        
       </div>
     </div>
   );
