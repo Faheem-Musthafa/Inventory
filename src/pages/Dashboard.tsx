@@ -180,7 +180,19 @@ export function Dashboard() {
           </CardContent>
         </Card>
 
-        
+        <Card className="bg-gradient-to-br from-purple-500 to-purple-600 text-white">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-purple-100">Total Items Sold</p>
+                <p className="text-3xl font-bold mt-2">{totalSoldItems}</p>
+              </div>
+              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                <Package className="w-6 h-6" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         
 
@@ -290,7 +302,7 @@ export function Dashboard() {
                       <TableCell className="font-medium">{product.name}</TableCell>
                       <TableCell className="text-gray-600 font-mono text-sm">{product.sku}</TableCell>
                       <TableCell>
-                        <span className="px-2 py-1 bg-[#f1e6bc] text-[#b38d42] rounded-md text-xs font-medium">
+                        <span className="px-2 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-medium">
                           {product.category}
                         </span>
                       </TableCell>
@@ -298,7 +310,7 @@ export function Dashboard() {
                         {formatCurrency(product.price)}
                       </TableCell>
                       <TableCell className="text-center">
-                        <span className="px-3 py-1 bg-[#f1e6bc] text-[#b38d42] rounded-md text-xs font-bold">
+                        <span className="px-3 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-bold">
                           {product.sold_count || 0}
                         </span>
                       </TableCell>
@@ -308,7 +320,7 @@ export function Dashboard() {
                             variant="ghost"
                             size="sm"
                             onClick={() => handleEdit(product)}
-                            className="text-[#bda15e] hover:text-[#b38d42] hover:bg-[#f8f1d8]"
+                            className="text-black hover:text-black hover:bg-[#f8f1d8]"
                           >
                             <Edit className="w-4 h-4" />
                           </Button>

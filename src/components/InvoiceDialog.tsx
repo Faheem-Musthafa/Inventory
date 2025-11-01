@@ -105,13 +105,19 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
               padding-bottom: 10px;
             }
             .store-name {
-              font-size: 16px;
+              font-size: 24px;
               font-weight: bold;
               margin-bottom: 5px;
             }
             .store-details {
               font-size: 10px;
               line-height: 1.3;
+            }
+            .text-underline {
+              text-decoration: underline;
+              text-decoration-color: gray;
+              text-decoration-thickness: 0.5px;
+              text-underline-offset: 2px;
             }
             .divider {
               border-bottom: 1px solid #000;
@@ -241,12 +247,13 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
         </DialogHeader>
 
         {/* Hidden print content - Thermal Receipt Style */}
-        <div id="invoice-print-content" style={{ display: 'none' }}>
+        <div id="invoice-print-content" style={{ display: 'none', color: '#' }}>
           <div className="header">
             <div className="store-name">{settings.logo}</div>
             <div className="store-details">
               {settings.companyName}<br />
               {settings.storeAddress}<br />
+              <span className='text-underline'>{settings.storePhone}</span><br />
               TRN {settings.trnCode}
             </div>
           </div>
@@ -327,9 +334,10 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
         <div className="py-4 max-w-sm mx-auto">
           {/* Header */}
           <div className="text-center mb-4 pb-3 border-b-2 border-dashed">
-            <h2 className="text-xl font-bold text-gray-900">{settings.logo}</h2>
+            <h2 className="text-2xl font-bold text-[#c7a956]">{settings.logo}</h2>
             <p className="text-xs text-gray-700 font-semibold mt-1">{settings.companyName}</p>
             <p className="text-xs text-gray-600 mt-1">{settings.storeAddress}</p>
+            <p className="text-xs underline underline-offset-3 text-gray-600 mt-1">{settings.storePhone}</p>
             <p className="text-xs text-gray-600">TRN {settings.trnCode}</p>
           </div>
 
@@ -414,7 +422,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button onClick={handlePrint} data-print-invoice className="bg-blue-600 hover:bg-blue-700">
+            <Button onClick={handlePrint} data-print-invoice className="bg-[#c7a956] hover:bg-[#dcb341]">
               <Printer className="w-4 h-4 mr-2" />
               Print Receipt
             </Button>

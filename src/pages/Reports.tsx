@@ -160,7 +160,7 @@ export function Reports() {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#c7a956]"></div>
       </div>
     );
   }
@@ -267,7 +267,7 @@ export function Reports() {
                 <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
               </div>
               <div className="p-3 bg-blue-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-blue-600" />
+                <DollarSign className="w-6 h-6 text-[#c7a956]" />
               </div>
             </div>
           </CardContent>
@@ -320,7 +320,7 @@ export function Reports() {
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">
-              <div className="w-2 h-6 bg-gradient-to-b from-blue-500 to-purple-600 rounded-full"></div>
+              <div className="w-2 h-6 bg-gradient-to-b from-[#c7a956] to-black rounded-full"></div>
               Sales by Category
             </CardTitle>
           </CardHeader>
@@ -418,7 +418,7 @@ export function Reports() {
                 topProducts.map((product, index) => (
                   <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 hover:bg-gray-100 transition-colors">
                     <div className="flex items-center gap-3 flex-1">
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-sm shadow-md">
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c7a956] to-black flex items-center justify-center text-white font-bold text-sm shadow-md">
                         {index + 1}
                       </div>
                       <div>
