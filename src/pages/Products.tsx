@@ -256,14 +256,6 @@ export function Products() {
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-2xl font-bold text-gray-900">Category</h1>
-          <Button 
-            size="icon" 
-            disabled
-            className="rounded-full bg-[#c7a956] hover:bg-[#bc994e]"
-            onClick={() => setDialogOpen(true)}
-          >
-            <Plus className="w-5 h-5" />
-          </Button>
         </div>
 
         {/* Category Filter */}
