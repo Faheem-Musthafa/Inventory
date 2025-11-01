@@ -47,7 +47,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           </div>
           <div>
             <h1 className="text-white font-bold text-lg">{storeName}</h1>
-            <p className="text-[#e8d9a3] text-xs">Inventory System</p>
+            <p className="text-[#ded1a2] text-xs">Inventory System</p>
           </div>
         </div>
       </div>
