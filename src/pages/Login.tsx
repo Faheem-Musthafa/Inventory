@@ -139,7 +139,7 @@ export function Login({ onLogin }: LoginProps) {
               <Lock className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-500">Sign in to access Afonex Inventory</p>
+            <p className="text-gray-500">Sign in to access FUDE Studio Dubai Inventory</p>
             
             {/* Role Badges */}
             <div className="flex items-center justify-center gap-2 pt-2">
@@ -168,7 +168,7 @@ export function Login({ onLogin }: LoginProps) {
                         <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <Input
                           type="email"
-                          placeholder="admin@afonex.com"
+                          placeholder="admin@fudestudio.com"
                           className="pl-11 h-12 bg-gray-50 border-gray-200 focus:border-[#cfb579] focus:ring-2 focus:ring-[#e8d9a3] transition-all"
                           {...field}
                         />
@@ -235,10 +235,10 @@ export function Login({ onLogin }: LoginProps) {
           {/* Footer */}
           <div className="text-center pt-4 border-t border-gray-100">
             <p className="text-sm text-gray-500">
-              Afonex Inventory Management System
+              FUDE Studio Dubai Inventory Management System
             </p>
             <p className="text-xs text-gray-400 mt-1">
-              © 2025 Afonex. All rights reserved.
+              © 2025 FUDE Studio Dubai. All rights reserved.
             </p>
           </div>
         </div>

@@ -14,9 +14,10 @@ import { getCurrentUser } from '@/lib/auth';
 
 interface HeaderProps {
   onLogout?: () => void;
+  onMenuClick?: () => void;
 }
 
-export function Header({ onLogout }: HeaderProps) {
+export function Header({ onLogout, onMenuClick }: HeaderProps) {
   const [currentTime, setCurrentTime] = useState(new Date());
   const currentUser = getCurrentUser();
 
@@ -32,22 +33,33 @@ export function Header({ onLogout }: HeaderProps) {
 
   return (
     <header className="bg-gradient-to-r from-white to-gray-50 border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-      <div className="px-8 py-4">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 lg:px-8 py-3 lg:py-4">
+        <div className="flex items-center justify-between gap-4">
           
-          {/* Left Side - Greeting & Date/Time */}
-          <div className="flex items-center gap-6">
+          {/* Left Side - Hamburger Menu (Mobile/Tablet) + Greeting & Date/Time */}
+          <div className="flex items-center gap-3 lg:gap-6">
+            {/* Hamburger Menu Button */}
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onMenuClick}
+              className="lg:hidden rounded-lg hover:bg-gray-100"
+            >
+              <Menu className="w-6 h-6 text-gray-700" />
+            </Button>
+
             <div>
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                 Good {new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}! 
               </h1>
-              <div className="flex items-center gap-4 mt-1">
-                <div className="flex items-center gap-2 text-sm text-gray-500">
-                  <Calendar className="w-4 h-4" />
-                  <span>{format(currentTime, 'EEEE, MMMM d, yyyy')}</span>
+              <div className="flex items-center gap-2 sm:gap-4 mt-1">
+                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-gray-500">
+                  <Calendar className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{format(currentTime, 'EEEE, MMMM d, yyyy')}</span>
+                  <span className="sm:hidden">{format(currentTime, 'MMM d, yyyy')}</span>
                 </div>
-                <div className="hidden sm:block w-1 h-1 rounded-full bg-gray-300"></div>
-                <div className="hidden sm:flex items-center gap-2 text-sm text-gray-500">
+                <div className="hidden md:block w-1 h-1 rounded-full bg-gray-300"></div>
+                <div className="hidden md:flex items-center gap-2 text-sm text-gray-500">
                   <TrendingUp className="w-4 h-4" />
                   <span>Live Dashboard</span>
                 </div>
@@ -56,30 +68,30 @@ export function Header({ onLogout }: HeaderProps) {
           </div>
 
           {/* Right Side - Actions & Profile */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             
-            {/* Notifications */}
+            {/* Notifications - Hidden on mobile */}
             <Button 
               variant="ghost" 
               disabled
               size="icon" 
-              className="relative rounded-full hover:bg-[#ccb88b]  transition-colors"
+              className="hidden sm:flex relative rounded-full hover:bg-[#ccb88b] transition-colors"
             >
               <MailQuestion className="w-5 h-5 text-gray-600" />
               <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
             </Button>
 
-            {/* Divider */}
-            <div className="h-8 w-px bg-gray-200"></div>
+            {/* Divider - Hidden on mobile */}
+            <div className="hidden sm:block h-8 w-px bg-gray-200"></div>
 
             {/* User Profile Dropdown */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <div className="flex items-center gap-3 bg-white rounded-full px-4 py-2 shadow-sm border border-gray-200 hover:border-[#e5d39b] transition-all cursor-pointer">
-                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#cfb579] to-[#bda15e] flex items-center justify-center text-white font-semibold text-sm shadow-md">
-                    <User className="w-5 h-5" />
+                <div className="flex items-center gap-2 sm:gap-3 bg-white rounded-full px-2 sm:px-4 py-2 shadow-sm border border-gray-200 hover:border-[#e5d39b] transition-all cursor-pointer">
+                  <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-[#cfb579] to-[#bda15e] flex items-center justify-center text-white font-semibold text-sm shadow-md">
+                    <User className="w-4 h-4 sm:w-5 sm:h-5" />
                   </div>
-                  <div className="hidden md:block">
+                  <div className="hidden lg:block">
                     <p className="text-sm font-semibold text-gray-900">{currentUser?.name || 'User'}</p>
                     <p className="text-xs text-gray-500 capitalize flex items-center gap-1">
                       {currentUser?.role === 'manager' ? (
@@ -95,7 +107,7 @@ export function Header({ onLogout }: HeaderProps) {
                       )}
                     </p>
                   </div>
-                  <Menu className="w-4 h-4 text-gray-400 hidden md:block" />
+                  <Menu className="w-4 h-4 text-gray-400 hidden lg:block" />
                 </div>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">

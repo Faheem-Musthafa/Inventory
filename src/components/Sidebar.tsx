@@ -8,6 +8,8 @@ import { getCurrentUser, isStaff } from '@/lib/auth';
 interface SidebarProps {
   currentPage: string;
   onNavigate: (page: string) => void;
+  isOpen?: boolean;
+  onClose?: () => void;
 }
 
 const navigation = [
@@ -18,7 +20,7 @@ const navigation = [
   { name: 'Settings', icon: Settings, id: 'settings' },
 ];
 
-export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
+export function Sidebar({ currentPage, onNavigate, isOpen = true, onClose }: SidebarProps) {
   const [storeName, setStoreName] = useState('InventoryPro');
   const currentUser = getCurrentUser();
   const userIsStaff = isStaff(currentUser);
@@ -40,8 +42,27 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
     }
   };
 
+  const handleNavigate = (page: string) => {
+    onNavigate(page);
+    if (onClose) onClose(); // Close sidebar on mobile after navigation
+  };
+
   return (
-    <div className="w-64 bg-gradient-to-b from-[#bda15e] to-[#9e8447] h-screen sticky top-0 flex flex-col shadow-xl">
+    <>
+      {/* Mobile/Tablet Overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={onClose}
+        />
+      )}
+      
+      {/* Sidebar */}
+      <div className={cn(
+        "w-64 bg-gradient-to-b from-[#bda15e] to-[#9e8447] h-screen flex flex-col shadow-xl transition-transform duration-300 ease-in-out z-50",
+        "fixed lg:sticky top-0",
+        isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+      )}>
       {/* Brand Header */}
       <div className="p-6 border-b border-[#c7a956]">
         <div className="flex items-center gap-3">
@@ -68,7 +89,7 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
           return (
             <button
               key={item.id}
-              onClick={() => onNavigate(item.id)}
+              onClick={() => handleNavigate(item.id)}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg mb-2 transition-all duration-200',
                 isActive
@@ -87,9 +108,10 @@ export function Sidebar({ currentPage, onNavigate }: SidebarProps) {
       <div className="p-4 border-t border-[#c7a956]">
         <div className="text-center text-[#e8d9a3] text-xs">
           <p>© 2025 {storeName}</p>
-          <p className="mt-1">Powered by Afonex</p>
+          <p className="mt-1">Powered by FUDE Studio Dubai</p>
         </div>
       </div>
     </div>
+    </>
   );
 }

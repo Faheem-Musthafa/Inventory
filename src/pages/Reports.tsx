@@ -166,27 +166,25 @@ export function Reports() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 sm:space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Reports</h1>
-          <p className="text-gray-500 mt-1">Analytics and sales insights</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reports</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">Analytics and sales insights</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportToCSV}>
-            <Download className="w-4 h-4 mr-2" />
-            Export CSV
-          </Button>
-        </div>
+        <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
+          <Download className="w-4 h-4 mr-2" />
+          Export CSV
+        </Button>
       </div>
 
       {/* Date Range Filter */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-wrap items-center gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-start sm:items-center gap-3 sm:gap-4">
             <div className="flex items-center gap-2">
-              <CalendarIcon className="w-5 h-5 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filter by Date:</span>
+              <CalendarIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500" />
+              <span className="text-xs sm:text-sm font-medium text-gray-700">Filter by Date:</span>
             </div>
             
             <Popover>
@@ -194,11 +192,11 @@ export function Reports() {
                 <Button
                   variant="outline"
                   className={cn(
-                    "justify-start text-left font-normal",
+                    "justify-start text-left font-normal text-xs sm:text-sm w-full sm:w-auto",
                     !dateRange.from && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   {dateRange.from ? format(dateRange.from, 'MMM dd, yyyy') : 'From Date'}
                 </Button>
               </PopoverTrigger>
@@ -212,18 +210,18 @@ export function Reports() {
               </PopoverContent>
             </Popover>
 
-            <span className="text-gray-400">→</span>
+            <span className="text-gray-400 hidden sm:inline">→</span>
 
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
                   className={cn(
-                    "justify-start text-left font-normal",
+                    "justify-start text-left font-normal text-xs sm:text-sm w-full sm:w-auto",
                     !dateRange.to && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
                   {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : 'To Date'}
                 </Button>
               </PopoverTrigger>
@@ -258,65 +256,65 @@ export function Reports() {
         </CardContent>
       </Card>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Total Revenue</p>
-                <p className="text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Revenue</p>
+                <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{formatCurrency(totalRevenue)}</p>
               </div>
-              <div className="p-3 bg-blue-50 rounded-lg">
-                <DollarSign className="w-6 h-6 text-[#c7a956]" />
+              <div className="p-2 sm:p-3 bg-blue-50 rounded-lg">
+                <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-[#c7a956]" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Items Sold</p>
-                <p className="text-3xl font-bold text-gray-900">{totalItemsSold}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Items Sold</p>
+                <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{totalItemsSold}</p>
               </div>
-              <div className="p-3 bg-green-50 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-green-600" />
+              <div className="p-2 sm:p-3 bg-green-50 rounded-lg">
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-green-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Total Orders</p>
-                <p className="text-3xl font-bold text-gray-900">{totalOrders}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Orders</p>
+                <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{totalOrders}</p>
               </div>
-              <div className="p-3 bg-amber-50 rounded-lg">
-                <TrendingUp className="w-6 h-6 text-amber-600" />
+              <div className="p-2 sm:p-3 bg-amber-50 rounded-lg">
+                <TrendingUp className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-amber-600" />
               </div>
             </div>
           </CardContent>
         </Card>
 
         <Card>
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-start justify-between">
-              <div className="space-y-2">
-                <p className="text-sm font-medium text-gray-600">Total Products</p>
-                <p className="text-3xl font-bold text-gray-900">{totalProducts}</p>
+              <div className="space-y-1 sm:space-y-2">
+                <p className="text-xs sm:text-sm font-medium text-gray-600">Products</p>
+                <p className="text-lg sm:text-2xl lg:text-3xl font-bold text-gray-900">{totalProducts}</p>
               </div>
-              <div className="p-3 bg-purple-50 rounded-lg">
-                <ShoppingCart className="w-6 h-6 text-purple-600" />
+              <div className="p-2 sm:p-3 bg-purple-50 rounded-lg">
+                <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 lg:w-6 lg:h-6 text-purple-600" />
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
         <Card>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2">

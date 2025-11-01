@@ -22,6 +22,7 @@ import { db, type Product } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc as firestoreDoc, orderBy, query, getDoc } from 'firebase/firestore';
 import { ProductDialog } from '@/components/ProductDialog';
 import { useToast } from '@/hooks/use-toast';
+import { getCurrentUser, isStaff } from '@/lib/auth';
 
 interface StoreSettings {
   currency: string;
@@ -41,6 +42,10 @@ export function Dashboard() {
     lowStockThreshold: 10,
   });
   const { toast } = useToast();
+  
+  // Check if current user is staff
+  const currentUser = getCurrentUser();
+  const userIsStaff = isStaff(currentUser);
 
   useEffect(() => {
     loadSettings();
@@ -148,33 +153,37 @@ export function Dashboard() {
   const categories = Array.from(new Set(products.map((p) => p.category)));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Product Management</h1>
-          <p className="text-gray-500 mt-1">Add, edit, and manage your inventory</p>
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Product Management</h1>
+          <p className="text-sm sm:text-base text-gray-500 mt-1">
+            {userIsStaff ? 'View product inventory' : 'Add, edit, and manage your inventory'}
+          </p>
         </div>
-        <Button 
-          onClick={() => setDialogOpen(true)}
-          className="bg-[#bda15e] hover:bg-[#b38d42]"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          Add New Product
-        </Button>
+        {!userIsStaff && (
+          <Button 
+            onClick={() => setDialogOpen(true)}
+            className="bg-[#bda15e] hover:bg-[#b38d42] w-full sm:w-auto"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Add New Product
+          </Button>
+        )}
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
         <Card className="bg-gradient-to-br from-[#cfb579] to-[#bda15e] text-white">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-[#f1e6bc]">Total Products</p>
-                <p className="text-3xl font-bold mt-2">{products.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-[#f1e6bc]">Total Products</p>
+                <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">{products.length}</p>
               </div>
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
           </CardContent>
@@ -185,14 +194,14 @@ export function Dashboard() {
         
 
         <Card className="bg-gradient-to-br from-orange-500 to-orange-600 text-white">
-          <CardContent className="p-6">
+          <CardContent className="p-4 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-orange-100">Categories</p>
-                <p className="text-3xl font-bold mt-2">{categories.length}</p>
+                <p className="text-xs sm:text-sm font-medium text-orange-100">Categories</p>
+                <p className="text-2xl sm:text-3xl font-bold mt-1 sm:mt-2">{categories.length}</p>
               </div>
-              <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                <Package className="w-6 h-6" />
+              <div className="w-10 h-10 sm:w-12 sm:h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 sm:w-6 sm:h-6" />
               </div>
             </div>
           </CardContent>
@@ -201,20 +210,20 @@ export function Dashboard() {
 
       {/* Filters and Search */}
       <Card>
-        <CardContent className="p-6">
-          <div className="flex flex-col sm:flex-row gap-4">
+        <CardContent className="p-3 sm:p-6">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <Input
                 type="search"
-                placeholder="Search by name, product_id, or category..."
+                placeholder="Search products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-              <SelectTrigger className="w-full sm:w-48">
+              <SelectTrigger className="w-full sm:w-48 text-sm">
                 <SelectValue placeholder="Filter by category" />
               </SelectTrigger>
               <SelectContent>
@@ -232,18 +241,18 @@ export function Dashboard() {
 
       {/* Products Table */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#bda15e]"></div>
             </div>
           ) : filteredProducts.length === 0 ? (
             <div className="text-center py-12">
-              <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <Package className="w-12 h-12 sm:w-16 sm:h-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                 {searchQuery || categoryFilter !== 'all' ? 'No products found' : 'No products yet'}
               </h3>
-              <p className="text-gray-500 mb-4">
+              <p className="text-sm sm:text-base text-gray-500 mb-4">
                 {searchQuery || categoryFilter !== 'all' 
                   ? 'Try adjusting your filters'
                   : 'Get started by adding your first product'}
@@ -256,17 +265,17 @@ export function Dashboard() {
               )}
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow className="bg-gray-50">
-                    <TableHead className="w-20">Image</TableHead>
-                    <TableHead>Product Name</TableHead>
-                    <TableHead>product_id</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead className="text-right">Price</TableHead>
-                    <TableHead className="text-center">Sold</TableHead>
-                    <TableHead className="text-right w-32">Actions</TableHead>
+                    <TableHead className="w-16 sm:w-20">Image</TableHead>
+                    <TableHead className="min-w-[120px]">Product Name</TableHead>
+                    <TableHead className="hidden sm:table-cell">product_id</TableHead>
+                    <TableHead className="hidden md:table-cell">Category</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Price</TableHead>
+                    <TableHead className="text-center hidden lg:table-cell">Sold</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -275,7 +284,7 @@ export function Dashboard() {
                       key={product.id}
                     >
                       <TableCell>
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                           {product.image_url ? (
                             <img 
                               src={product.image_url} 
@@ -283,44 +292,54 @@ export function Dashboard() {
                               className="w-full h-full object-cover"
                             />
                           ) : (
-                            <Package className="w-6 h-6 text-gray-400" />
+                            <Package className="w-5 h-5 sm:w-6 sm:h-6 text-gray-400" />
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="font-medium">{product.name}</TableCell>
-                      <TableCell className="text-gray-600 font-mono text-sm">{product.product_id}</TableCell>
-                      <TableCell>
-                        <span className="px-2 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-medium">
+                      <TableCell className="font-medium text-sm">
+                        <div className="flex flex-col">
+                          <span>{product.name}</span>
+                          <span className="text-xs text-gray-500 sm:hidden">{product.product_id}</span>
+                          <span className="text-xs text-gray-500 md:hidden">{product.category}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-gray-600 font-mono text-sm hidden sm:table-cell">{product.product_id}</TableCell>
+                      <TableCell className="hidden md:table-cell">
+                        <span className="px-2 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-medium whitespace-nowrap">
                           {product.category}
                         </span>
                       </TableCell>
-                      <TableCell className="text-right font-medium">
+                      <TableCell className="text-right font-medium text-sm whitespace-nowrap">
                         {formatCurrency(product.price)}
                       </TableCell>
-                      <TableCell className="text-center">
+                      <TableCell className="text-center hidden lg:table-cell">
                         <span className="px-3 py-1 bg-[#f1e6bc] text-black rounded-md text-xs font-bold">
                           {product.sold_count || 0}
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleEdit(product)}
-                            className="text-black hover:text-black hover:bg-[#f8f1d8]"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleDelete(product.id, product.name)}
-                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
+                        {!userIsStaff ? (
+                          <div className="flex justify-end gap-1">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleEdit(product)}
+                              className="text-black hover:text-black hover:bg-[#f8f1d8] h-8 w-8 p-0"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDelete(product.id, product.name)}
+                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        ) : (
+                          <span className="text-xs text-gray-500">View Only</span>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))}

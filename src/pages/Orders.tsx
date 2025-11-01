@@ -179,27 +179,27 @@ export function Orders() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Orders Management</h1>
-        <p className="text-gray-500 mt-1">View and manage all customer orders</p>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Orders Management</h1>
+        <p className="text-sm sm:text-base text-gray-500 mt-1">View and manage all customer orders</p>
       </div>
 
       {/* Search and Filters */}
       <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+        <CardContent className="p-3 sm:p-4">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4">
             <div className="flex-1 relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
-                placeholder="Search by order ID or product name..."
+                placeholder="Search orders..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="pl-10 text-sm"
               />
             </div>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Status" />
               </SelectTrigger>
               <SelectContent>
@@ -210,7 +210,7 @@ export function Orders() {
               </SelectContent>
             </Select>
             <Select value={paymentFilter} onValueChange={setPaymentFilter}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full sm:w-[160px]">
                 <SelectValue placeholder="Payment Mode" />
               </SelectTrigger>
               <SelectContent>
@@ -226,70 +226,70 @@ export function Orders() {
 
       {/* Orders Table */}
       <Card>
-        <CardContent className="p-6">
+        <CardContent className="p-3 sm:p-6">
           {loading ? (
             <div className="flex items-center justify-center h-64">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#c7a956]"></div>
             </div>
           ) : filteredOrders.length === 0 ? (
             <div className="text-center py-12">
-              <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">
                 {orders.length === 0 ? 'No orders yet' : 'No orders found'}
               </h3>
-              <p className="text-gray-500">
+              <p className="text-sm sm:text-base text-gray-500">
                 {orders.length === 0 
                   ? 'Orders will appear here once customers place them' 
                   : 'Try adjusting your search or filters'}
               </p>
             </div>
           ) : (
-            <div className="border rounded-lg overflow-hidden">
+            <div className="border rounded-lg overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead>Date</TableHead>
-                    <TableHead>Time</TableHead>
-                    <TableHead>Items</TableHead>
-                    <TableHead>Staff</TableHead>
-                    <TableHead>Payment Mode</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead className="text-right">Total</TableHead>
-                    <TableHead className="text-right">Actions</TableHead>
+                    <TableHead className="whitespace-nowrap">Date</TableHead>
+                    <TableHead className="whitespace-nowrap hidden sm:table-cell">Time</TableHead>
+                    <TableHead className="whitespace-nowrap">Items</TableHead>
+                    <TableHead className="whitespace-nowrap hidden lg:table-cell">Staff</TableHead>
+                    <TableHead className="whitespace-nowrap hidden md:table-cell">Payment</TableHead>
+                    <TableHead className="whitespace-nowrap">Status</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Total</TableHead>
+                    <TableHead className="text-right whitespace-nowrap">Actions</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredOrders.map((order) => (
                     <TableRow key={order.id}>
-                      <TableCell className=" text-sm text-gray-600">
-                        <span className="font-medium">
-                            {format(new Date(order.created_at), 'MMM dd, yyyy')}
-                          </span>
-                      </TableCell>
-                      <TableCell className="text-gray-600">
+                      <TableCell className="text-sm text-gray-600">
                         <div className="flex flex-col">
-                          <span className="font-medium text-xs text-gray-500">
+                          <span className="font-medium whitespace-nowrap">
+                            {format(new Date(order.created_at), 'MMM dd')}
+                          </span>
+                          <span className="text-xs text-gray-500 sm:hidden">
                             {format(new Date(order.created_at), 'hh:mm a')}
                           </span>
                         </div>
                       </TableCell>
+                      <TableCell className="text-gray-600 hidden sm:table-cell">
+                        <span className="font-medium text-xs text-gray-500 whitespace-nowrap">
+                          {format(new Date(order.created_at), 'hh:mm a')}
+                        </span>
+                      </TableCell>
                       <TableCell className="text-gray-600">
-                        <div className="flex flex-col">
-                          <span className="font-medium">{order.order_items.length} items</span>
-                          <span className="text-xs text-gray-500">
-                            {order.order_items.map(item => item.product_name).join(', ').substring(0, 30)}
-                            {order.order_items.map(item => item.product_name).join(', ').length > 30 ? '...' : ''}
+                        <div className="flex flex-col min-w-[100px]">
+                          <span className="font-medium text-sm">{order.order_items.length} items</span>
+                          <span className="text-xs text-gray-500 truncate max-w-[150px]">
+                            {order.order_items.map(item => item.product_name).join(', ')}
                           </span>
                         </div>
                       </TableCell>
-                      <TableCell className="text-gray-600">
-                        <div className="flex items-center gap-1.5">
-                          <span className="font-medium text-sm">
-                            {order.staff_name || 'N/A'}
-                          </span>
-                        </div>
+                      <TableCell className="text-gray-600 hidden lg:table-cell">
+                        <span className="font-medium text-sm whitespace-nowrap">
+                          {order.staff_name || 'N/A'}
+                        </span>
                       </TableCell>
-                      <TableCell>
-                        <Badge variant="outline" className="font-normal">
+                      <TableCell className="hidden md:table-cell">
+                        <Badge variant="outline" className="font-normal text-xs whitespace-nowrap">
                           {order.payment_mode}
                         </Badge>
                       </TableCell>
@@ -298,32 +298,33 @@ export function Orders() {
                           value={order.payment_status}
                           onValueChange={(value) => updateOrderStatus(order.id, value)}
                         >
-                          <SelectTrigger className="w-[120px] h-8">
+                          <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs sm:text-sm">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="Paid">
-                              <span className="text-green-700">Paid</span>
+                              <span className="text-green-700 text-xs sm:text-sm">Paid</span>
                             </SelectItem>
                             <SelectItem value="Pending">
-                              <span className="text-yellow-700">Pending</span>
+                              <span className="text-yellow-700 text-xs sm:text-sm">Pending</span>
                             </SelectItem>
                             <SelectItem value="Cancelled">
-                              <span className="text-red-700">Cancelled</span>
+                              <span className="text-red-700 text-xs sm:text-sm">Cancelled</span>
                             </SelectItem>
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell className="text-right font-semibold">
+                      <TableCell className="text-right font-semibold text-sm whitespace-nowrap">
                         {formatCurrency(Number(order.total))}
                       </TableCell>
                       <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                        <div className="flex justify-end gap-1">
                           <Button
                             variant="ghost"
                             size="sm"
                             onClick={() => handleViewInvoice(order)}
                             title="View Details"
+                            className="h-8 w-8 p-0"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -332,6 +333,7 @@ export function Orders() {
                             size="sm"
                             onClick={() => handlePrint(order)}
                             title="Print Invoice"
+                            className="h-8 w-8 p-0"
                           >
                             <Printer className="w-4 h-4" />
                           </Button>

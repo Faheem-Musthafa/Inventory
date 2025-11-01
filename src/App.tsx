@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import './App.css';
 import { Header } from '@/components/Header';
 import { Sidebar } from '@/components/Sidebar';
 import { Dashboard } from '@/pages/Dashboard';
@@ -15,6 +14,7 @@ function App() {
   const [currentPage, setCurrentPage] = useState('products');
   const [isAuthenticatedState, setIsAuthenticatedState] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
 
   // Check authentication status on mount
   useEffect(() => {
@@ -82,10 +82,18 @@ function App() {
   // Show main app if authenticated
   return (
     <div className="flex min-h-screen bg-gray-50">
-      <Sidebar currentPage={currentPage} onNavigate={setCurrentPage} />
-      <div className="flex-1 flex flex-col">
-        <Header onLogout={handleLogout} />
-        <main className="flex-1 p-8">
+      <Sidebar 
+        currentPage={currentPage} 
+        onNavigate={setCurrentPage}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+      />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header 
+          onLogout={handleLogout}
+          onMenuClick={() => setSidebarOpen(!sidebarOpen)}
+        />
+        <main className="flex-1 p-4 sm:p-6 lg:p-8">
           {renderPage()}
         </main>
       </div>
