@@ -1,14 +1,22 @@
 import { useEffect, useState } from 'react';
-import { DollarSign, ShoppingCart, TrendingUp, Download, Calendar as CalendarIcon } from 'lucide-react';
+import { DollarSign, ShoppingCart, TrendingUp, FileText, Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { db, type Product, type Order } from '@/lib/firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 import { format, startOfDay, endOfDay, isWithinInterval } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { generateSettlementReportPDF } from '@/lib/settlementReportGenerator';
+import { useToast } from '@/hooks/use-toast';
 
 const COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6'];
 
@@ -31,39 +39,12 @@ export function Reports() {
   const [settings, setSettings] = useState<StoreSettings>({
     currency: 'AED',
   });
+  const { toast } = useToast();
 
   useEffect(() => {
     loadSettings();
     loadReports();
   }, [dateRange]);
-
-  // Auto-update date to today at midnight
-  useEffect(() => {
-    const checkMidnight = () => {
-      const now = new Date();
-      const tomorrow = new Date(now);
-      tomorrow.setDate(tomorrow.getDate() + 1);
-      tomorrow.setHours(0, 0, 0, 0);
-      
-      const timeUntilMidnight = tomorrow.getTime() - now.getTime();
-      
-      const timer = setTimeout(() => {
-        // Update to today's date at midnight
-        setDateRange({
-          from: new Date(),
-          to: undefined,
-        });
-        // Set up next midnight check
-        checkMidnight();
-      }, timeUntilMidnight);
-      
-      return timer;
-    };
-    
-    const timer = checkMidnight();
-    
-    return () => clearTimeout(timer);
-  }, []);
 
   const loadSettings = async () => {
     try {
@@ -169,6 +150,160 @@ export function Reports() {
     }
   };
 
+  const generateSettlementReport = async () => {
+    try {
+      // Use the current filtered date range
+      const startDate = dateRange.from ? startOfDay(dateRange.from) : startOfDay(new Date());
+      const endDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
+      
+      // Fetch orders for the date range
+      const ordersSnapshot = await getDocs(collection(db, 'orders'));
+      const allOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
+      
+      // Filter for selected date range and paid orders only
+      const filteredOrders = allOrders.filter(order => {
+        const orderDate = new Date(order.created_at);
+        return isWithinInterval(orderDate, { start: startDate, end: endDate }) && 
+               order.payment_status === 'Paid';
+      });
+      
+      if (filteredOrders.length === 0) {
+        toast({
+          title: 'No Data',
+          description: 'No paid orders found for the selected date range',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Fetch order items for detailed analysis
+      const itemsSnapshot = await getDocs(collection(db, 'order_items'));
+      const allItems = itemsSnapshot.docs.map(doc => doc.data());
+      
+      const filteredOrderIds = new Set(filteredOrders.map(o => o.id));
+      const filteredItems = allItems.filter((item: any) => filteredOrderIds.has(item.order_id));
+
+      // Fetch products for category information
+      const productsSnapshot = await getDocs(collection(db, 'products'));
+      const allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
+      const productMap = new Map(allProducts.map(p => [p.name, p]));
+      
+      // Calculate totals
+      const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.total), 0);
+      const totalCashSales = filteredOrders.filter(o => o.payment_mode === 'Cash').reduce((sum, o) => sum + Number(o.total), 0);
+      const totalCardSales = filteredOrders.filter(o => o.payment_mode === 'Card').reduce((sum, o) => sum + Number(o.total), 0);
+      const totalOnlineSales = filteredOrders.filter(o => o.payment_mode === 'Online').reduce((sum, o) => sum + Number(o.total), 0);
+      const netSales = filteredOrders.reduce((sum, o) => sum + Number(o.subtotal), 0);
+      const taxCollected = filteredOrders.reduce((sum, o) => sum + Number(o.tax), 0);
+      const totalItemsSold = filteredItems.reduce((sum, item: any) => sum + Number(item.quantity), 0);
+      const averageOrderValue = totalRevenue / filteredOrders.length;
+      
+      const cashOrders = filteredOrders.filter(o => o.payment_mode === 'Cash').length;
+      const cardOrders = filteredOrders.filter(o => o.payment_mode === 'Card').length;
+      const onlineOrders = filteredOrders.filter(o => o.payment_mode === 'Online').length;
+
+      // Top products
+      const productSalesMap = new Map<string, { quantity: number; revenue: number }>();
+      filteredItems.forEach((item: any) => {
+        const current = productSalesMap.get(item.product_name) || { quantity: 0, revenue: 0 };
+        productSalesMap.set(item.product_name, {
+          quantity: current.quantity + Number(item.quantity),
+          revenue: current.revenue + Number(item.total)
+        });
+      });
+      
+      const topProducts = Array.from(productSalesMap.entries())
+        .map(([name, data]) => ({ name, quantity: data.quantity, revenue: data.revenue }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 10);
+
+      // Category breakdown
+      const categoryMap = new Map<string, { revenue: number; itemsSold: number }>();
+      filteredItems.forEach((item: any) => {
+        const product = productMap.get(item.product_name);
+        const category = product?.category || 'Uncategorized';
+        const current = categoryMap.get(category) || { revenue: 0, itemsSold: 0 };
+        categoryMap.set(category, {
+          revenue: current.revenue + Number(item.total),
+          itemsSold: current.itemsSold + Number(item.quantity)
+        });
+      });
+      
+      const categoryBreakdown = Array.from(categoryMap.entries())
+        .map(([category, data]) => ({ category, revenue: data.revenue, itemsSold: data.itemsSold }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      // Staff performance
+      const staffMap = new Map<string, { orders: number; revenue: number }>();
+      filteredOrders.forEach(order => {
+        const staffName = order.staff_name || 'Unknown';
+        const current = staffMap.get(staffName) || { orders: 0, revenue: 0 };
+        staffMap.set(staffName, {
+          orders: current.orders + 1,
+          revenue: current.revenue + Number(order.total)
+        });
+      });
+      
+      const staffPerformance = Array.from(staffMap.entries())
+        .map(([staff, data]) => ({ 
+          staff, 
+          orders: data.orders, 
+          revenue: data.revenue,
+          averageOrderValue: data.revenue / data.orders
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      // Hourly breakdown
+      const hourlyMap = new Map<string, { orders: number; revenue: number }>();
+      filteredOrders.forEach(order => {
+        const hour = format(new Date(order.created_at), 'HH:00');
+        const current = hourlyMap.get(hour) || { orders: 0, revenue: 0 };
+        hourlyMap.set(hour, {
+          orders: current.orders + 1,
+          revenue: current.revenue + Number(order.total)
+        });
+      });
+      
+      const hourlyBreakdown = Array.from(hourlyMap.entries())
+        .map(([hour, data]) => ({ hour, orders: data.orders, revenue: data.revenue }))
+        .sort((a, b) => a.hour.localeCompare(b.hour));
+      
+      // Generate PDF
+      generateSettlementReportPDF({
+        date: startDate.toISOString(),
+        orders: filteredOrders,
+        totalCashSales,
+        totalCardSales,
+        totalOnlineSales,
+        totalRevenue,
+        taxCollected,
+        netSales,
+        totalOrders: filteredOrders.length,
+        cashOrders,
+        cardOrders,
+        onlineOrders,
+        totalItemsSold,
+        averageOrderValue,
+        topProducts,
+        categoryBreakdown,
+        staffPerformance,
+        hourlyBreakdown
+      }, settings.currency);
+      
+      toast({
+        title: 'Settlement Report Generated',
+        description: `Report for ${format(startDate, 'MMM dd, yyyy')} has been downloaded`,
+      });
+    } catch (error) {
+      console.error('Error generating settlement report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate settlement report',
+        variant: 'destructive'
+      });
+    }
+  };
+
   const exportToCSV = () => {
     const headers = ['Product', 'Quantity Sold', 'Revenue'];
     const rows = topProducts.map((p) => [p.name, p.sold, p.revenue.toFixed(2)]);
@@ -207,10 +342,27 @@ export function Reports() {
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Reports</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">Analytics and sales insights</p>
         </div>
-        <Button variant="outline" onClick={exportToCSV} className="w-full sm:w-auto">
-          <Download className="w-4 h-4 mr-2" />
-          Export CSV
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="outline" className="w-full sm:w-auto">
+              <FileText className="w-4 h-4 mr-2" />
+              Generate Report
+              <ChevronDown className="w-4 h-4 ml-2" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuItem onClick={generateSettlementReport}>
+              <FileText className="w-4 h-4 mr-2" />
+              Settlement Report
+              <span className="ml-auto text-xs text-gray-500">PDF</span>
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={exportToCSV}>
+              <FileText className="w-4 h-4 mr-2" />
+              Product Sales Report
+              <span className="ml-auto text-xs text-gray-500">CSV</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Date Range Filter */}
