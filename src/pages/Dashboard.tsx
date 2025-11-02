@@ -22,7 +22,6 @@ import { db, type Product } from '@/lib/firebase';
 import { collection, getDocs, deleteDoc, doc as firestoreDoc, orderBy, query, getDoc } from 'firebase/firestore';
 import { ProductDialog } from '@/components/ProductDialog';
 import { useToast } from '@/hooks/use-toast';
-import { getCurrentUser, isStaff } from '@/lib/auth';
 
 interface StoreSettings {
   currency: string;
@@ -42,10 +41,6 @@ export function Dashboard() {
     lowStockThreshold: 10,
   });
   const { toast } = useToast();
-  
-  // Check if current user is staff
-  const currentUser = getCurrentUser();
-  const userIsStaff = isStaff(currentUser);
 
   useEffect(() => {
     loadSettings();
@@ -159,18 +154,16 @@ export function Dashboard() {
         <div>
           <h1 className="text-2xl sm:text-3xl font-bold text-gray-900">Product Management</h1>
           <p className="text-sm sm:text-base text-gray-500 mt-1">
-            {userIsStaff ? 'View product inventory' : 'Add, edit, and manage your inventory'}
+            Add, edit, and manage your inventory
           </p>
         </div>
-        {!userIsStaff && (
-          <Button 
-            onClick={() => setDialogOpen(true)}
-            className="bg-[#bda15e] hover:bg-[#b38d42] w-full sm:w-auto"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add New Product
-          </Button>
-        )}
+        <Button 
+          onClick={() => setDialogOpen(true)}
+          className="bg-[#bda15e] hover:bg-[#b38d42] w-full sm:w-auto"
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add New Product
+        </Button>
       </div>
 
       {/* Stats Cards */}
@@ -318,28 +311,24 @@ export function Dashboard() {
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
-                        {!userIsStaff ? (
-                          <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEdit(product)}
-                              className="text-black hover:text-black hover:bg-[#f8f1d8] h-8 w-8 p-0"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDelete(product.id, product.name)}
-                              className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-500">View Only</span>
-                        )}
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleEdit(product)}
+                            className="text-black hover:text-black hover:bg-[#f8f1d8] h-8 w-8 p-0"
+                          >
+                            <Edit className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDelete(product.id, product.name)}
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
                       </TableCell>
                     </TableRow>
                   ))}

@@ -165,13 +165,60 @@ export function Orders() {
 
   const updateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
+      // Find the order to get its previous status and items
+      const order = orders.find(o => o.id === orderId);
+      if (!order) return;
+      
+      const previousStatus = order.payment_status;
+      
+      // Update order status in database
       await updateDoc(doc(db, 'orders', orderId), {
         payment_status: newStatus,
       });
       
+      // If status changed to Cancelled from Paid, restore stock and reduce sold count
+      if (newStatus === 'Cancelled' && previousStatus === 'Paid') {
+        for (const item of order.order_items) {
+          // Get current product data
+          const productDoc = await getDoc(doc(db, 'products', item.product_id));
+          if (productDoc.exists()) {
+            const productData = productDoc.data();
+            const currentStock = productData.stock || 0;
+            const currentSoldCount = productData.sold_count || 0;
+            
+            // Restore stock and reduce sold count
+            await updateDoc(doc(db, 'products', item.product_id), {
+              stock: currentStock + item.quantity,
+              sold_count: Math.max(0, currentSoldCount - item.quantity),
+            });
+          }
+        }
+      }
+      
+      // If status changed from Cancelled to Paid, deduct stock and increase sold count
+      if (newStatus === 'Paid' && previousStatus === 'Cancelled') {
+        for (const item of order.order_items) {
+          // Get current product data
+          const productDoc = await getDoc(doc(db, 'products', item.product_id));
+          if (productDoc.exists()) {
+            const productData = productDoc.data();
+            const currentStock = productData.stock || 0;
+            const currentSoldCount = productData.sold_count || 0;
+            
+            // Deduct stock and increase sold count
+            await updateDoc(doc(db, 'products', item.product_id), {
+              stock: Math.max(0, currentStock - item.quantity),
+              sold_count: currentSoldCount + item.quantity,
+            });
+          }
+        }
+      }
+      
       toast({
         title: 'Status updated',
-        description: 'Order status has been updated successfully',
+        description: newStatus === 'Cancelled' 
+          ? 'Order cancelled. Stock has been restored and sales adjusted.'
+          : 'Order status has been updated successfully',
       });
       
       loadOrders();

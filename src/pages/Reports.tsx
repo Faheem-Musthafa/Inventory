@@ -95,6 +95,9 @@ export function Reports() {
       const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
       const items = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
+      // Filter out cancelled orders
+      orders = orders.filter(order => order.payment_status !== 'Cancelled');
+
       // Filter orders by specific date if selected
       if (dateRange.from) {
         const selectedDate = startOfDay(dateRange.from);
@@ -106,7 +109,7 @@ export function Reports() {
         });
       }
 
-      // Filter items based on the filtered orders
+      // Filter items based on the filtered orders (excluding cancelled)
       const filteredOrderIds = new Set(orders.map(o => o.id));
       const filteredItems = items.filter((item: any) => filteredOrderIds.has(item.order_id));
 
