@@ -37,6 +37,34 @@ export function Reports() {
     loadReports();
   }, [dateRange]);
 
+  // Auto-update date to today at midnight
+  useEffect(() => {
+    const checkMidnight = () => {
+      const now = new Date();
+      const tomorrow = new Date(now);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      tomorrow.setHours(0, 0, 0, 0);
+      
+      const timeUntilMidnight = tomorrow.getTime() - now.getTime();
+      
+      const timer = setTimeout(() => {
+        // Update to today's date at midnight
+        setDateRange({
+          from: new Date(),
+          to: undefined,
+        });
+        // Set up next midnight check
+        checkMidnight();
+      }, timeUntilMidnight);
+      
+      return timer;
+    };
+    
+    const timer = checkMidnight();
+    
+    return () => clearTimeout(timer);
+  }, []);
+
   const loadSettings = async () => {
     try {
       const settingsDoc = await getDoc(doc(db, 'settings', 'store'));

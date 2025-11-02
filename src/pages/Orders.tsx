@@ -130,6 +130,13 @@ export function Orders() {
   const filterOrders = () => {
     let filtered = [...orders];
 
+    // Filter by staff if current user is staff (not manager)
+    if (!userIsManager && currentUser) {
+      filtered = filtered.filter(order => 
+        order.staff_name === currentUser.name
+      );
+    }
+
     // Apply search filter
     if (searchQuery.trim()) {
       filtered = filtered.filter(order => {
