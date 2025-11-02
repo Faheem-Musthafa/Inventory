@@ -1,8 +1,18 @@
 import { useEffect, useState } from 'react';
-import { Printer, Search, Eye, Edit } from 'lucide-react';
+import { Printer, Search, Eye, Edit, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import {
   Table,
   TableBody,
@@ -20,7 +30,7 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { db, type OrderWithItems } from '@/lib/firebase';
-import { collection, getDocs, query, orderBy, where, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { collection, getDocs, query, orderBy, where, doc, getDoc, updateDoc, deleteDoc } from 'firebase/firestore';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { EditOrderDialog } from '@/components/EditOrderDialog';
 import { useToast } from '@/hooks/use-toast';
@@ -46,6 +56,8 @@ export function Orders() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState<string>('all');
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [orderToDelete, setOrderToDelete] = useState<OrderWithItems | null>(null);
   const { toast } = useToast();
   const currentUser = getCurrentUser();
   const userIsManager = isManager(currentUser);
@@ -174,6 +186,40 @@ export function Orders() {
   const handleEditOrder = (order: OrderWithItems) => {
     setSelectedOrder(order);
     setEditDialogOpen(true);
+  };
+
+  const handleDeleteClick = (order: OrderWithItems) => {
+    setOrderToDelete(order);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!orderToDelete) return;
+
+    try {
+      // Delete order items first
+      for (const item of orderToDelete.order_items) {
+        await deleteDoc(doc(db, 'order_items', item.id));
+      }
+
+      // Delete the order
+      await deleteDoc(doc(db, 'orders', orderToDelete.id));
+
+      toast({
+        title: 'Order deleted',
+        description: `Order #${orderToDelete.id.slice(-6)} has been deleted successfully`,
+      });
+
+      setDeleteDialogOpen(false);
+      setOrderToDelete(null);
+      loadOrders(); // Reload orders list
+    } catch (error: any) {
+      toast({
+        title: 'Error deleting order',
+        description: error.message,
+        variant: 'destructive',
+      });
+    }
   };
 
   const handlePrint = (order: OrderWithItems) => {
@@ -330,15 +376,26 @@ export function Orders() {
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
                           {userIsManager && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleEditOrder(order)}
-                              title="Edit Order"
-                              className="h-8 w-8 p-0 text-black hover:text-black hover:bg-[#f8f1d8]"
-                            >
-                              <Edit className="w-4 h-4" />
-                            </Button>
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditOrder(order)}
+                                title="Edit Order"
+                                className="h-8 w-8 p-0 text-black hover:text-black hover:bg-[#f8f1d8]"
+                              >
+                                <Edit className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteClick(order)}
+                                title="Delete Order"
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </>
                           )}
                           <Button
                             variant="ghost"
@@ -382,6 +439,27 @@ export function Orders() {
         order={selectedOrder}
         currencySymbol={settings.currency}
       />
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Order</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete order #{orderToDelete?.id.slice(-6)}? 
+              This will permanently delete the order and all its items. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

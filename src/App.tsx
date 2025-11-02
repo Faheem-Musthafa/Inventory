@@ -10,6 +10,8 @@ import { Login } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
 import { isAuthenticated, clearCurrentUser, getCurrentUser, isStaff } from '@/lib/auth';
 import { SpeedInsights } from '@vercel/speed-insights/react';
+import { generateStaffReport, clearStaffSales, getSalesFromStorage } from '@/lib/salesTracking';
+import { generateStaffSalesPDF } from '@/lib/pdfGenerator';
 
 
 
@@ -30,7 +32,34 @@ function App() {
     setIsAuthenticatedState(true);
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    const currentUser = getCurrentUser();
+    
+    // Generate PDF report for staff members before logout
+    if (currentUser && isStaff(currentUser)) {
+      const sales = getSalesFromStorage(currentUser.email);
+      
+      // Only generate PDF if there are sales recorded
+      if (sales.length > 0) {
+        try {
+          const report = generateStaffReport(currentUser.name || 'Staff', currentUser.email);
+          
+          // Get currency symbol from settings
+          const { getDoc, doc } = await import('firebase/firestore');
+          const { db } = await import('@/lib/firebase');
+          const settingsDoc = await getDoc(doc(db, 'settings', 'store'));
+          const currencySymbol = settingsDoc.exists() ? settingsDoc.data()?.currency || 'AED' : 'AED';
+          
+          generateStaffSalesPDF(report, currencySymbol);
+          
+          // Clear the sales data after generating report
+          clearStaffSales(currentUser.email);
+        } catch (error) {
+          console.error('Error generating staff report:', error);
+        }
+      }
+    }
+    
     clearCurrentUser();
     setIsAuthenticatedState(false);
     setCurrentPage('products');

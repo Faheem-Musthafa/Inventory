@@ -8,8 +8,9 @@ import { ProductDialog } from '@/components/ProductDialog';
 import { InvoiceDialog } from '@/components/InvoiceDialog';
 import { useToast } from '@/hooks/use-toast';
 import type { OrderWithItems } from '@/lib/firebase';
-import { getCurrentUser } from '@/lib/auth';
+import { getCurrentUser, isStaff } from '@/lib/auth';
 import { cn } from '@/lib/utils';
+import { addSaleToStorage, type StaffSale } from '@/lib/salesTracking';
 
 interface CartItem {
   product: Product;
@@ -182,7 +183,7 @@ export function Products() {
       // Create order
       const orderData = {
         payment_mode: paymentMethod, // Use selected payment method (Cash or Card)
-        payment_status: 'Pending',
+        payment_status: 'Paid', // Set as Paid when order is created
         subtotal: cartSubtotal,
         tax: cartTax,
         total: cartTotal,
@@ -225,6 +226,26 @@ export function Products() {
         ...orderData,
         order_items: orderItems
       };
+
+      // Track sale in localStorage if user is staff
+      if (currentUser && isStaff(currentUser)) {
+        const staffSale: StaffSale = {
+          orderId: orderRef.id,
+          total: cartTotal,
+          subtotal: cartSubtotal,
+          tax: cartTax,
+          paymentMode: paymentMethod,
+          timestamp: new Date().toISOString(),
+          items: cart.map(item => ({
+            productName: item.product.name,
+            quantity: item.quantity,
+            price: item.product.price,
+            total: item.product.price * item.quantity,
+          })),
+        };
+        
+        addSaleToStorage(currentUser.email, staffSale);
+      }
 
       toast({
         title: 'Order placed successfully!',

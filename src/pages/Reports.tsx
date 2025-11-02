@@ -25,7 +25,7 @@ export function Reports() {
   const [topProducts, setTopProducts] = useState<Array<{ name: string; sold: number; revenue: number }>>([]);
   const [loading, setLoading] = useState(true);
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
+    from: new Date(), // Automatically set to today's date
     to: undefined,
   });
   const [settings, setSettings] = useState<StoreSettings>({
@@ -67,14 +67,14 @@ export function Reports() {
       const products = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
       const items = itemsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 
-      // Filter orders by date range if selected
-      if (dateRange.from && dateRange.to) {
-        const fromDate = startOfDay(dateRange.from);
-        const toDate = endOfDay(dateRange.to);
+      // Filter orders by specific date if selected
+      if (dateRange.from) {
+        const selectedDate = startOfDay(dateRange.from);
+        const endDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(dateRange.from);
         
         orders = orders.filter(order => {
           const orderDate = new Date(order.created_at);
-          return isWithinInterval(orderDate, { start: fromDate, end: toDate });
+          return isWithinInterval(orderDate, { start: selectedDate, end: endDate });
         });
       }
 
@@ -82,29 +82,31 @@ export function Reports() {
       const filteredOrderIds = new Set(orders.map(o => o.id));
       const filteredItems = items.filter((item: any) => filteredOrderIds.has(item.order_id));
 
-      // Calculate total revenue
-      const totalRev = orders.reduce((sum, o) => sum + Number(o.total), 0);
+      // Calculate total revenue - will be 0 if no orders in date range
+      const totalRev = orders.length > 0 ? orders.reduce((sum, o) => sum + Number(o.total), 0) : 0;
       setTotalRevenue(totalRev);
       
-      // Calculate total orders
+      // Calculate total orders - will be 0 if no orders in date range
       setTotalOrders(orders.length);
       
-      // Calculate total products
+      // Calculate total products - always show total products regardless of date
       setTotalProducts(products.length);
       
-      // Calculate total items sold (from filtered items)
-      const totalSold = filteredItems.reduce((sum, item: any) => sum + Number(item.quantity || 0), 0);
+      // Calculate total items sold (from filtered items) - will be 0 if no items in date range
+      const totalSold = filteredItems.length > 0 ? filteredItems.reduce((sum, item: any) => sum + Number(item.quantity || 0), 0) : 0;
       setTotalItemsSold(totalSold);
 
-      // Category data based on sold items revenue (from filtered items)
+      // Category data based on sold items revenue (from filtered items) - will be empty if no items
       const categoryMap = new Map<string, number>();
-      filteredItems.forEach((item: any) => {
-        const product = products.find(p => p.id === item.product_id);
-        if (product) {
-          const current = categoryMap.get(product.category) || 0;
-          categoryMap.set(product.category, current + Number(item.total));
-        }
-      });
+      if (filteredItems.length > 0) {
+        filteredItems.forEach((item: any) => {
+          const product = products.find(p => p.id === item.product_id);
+          if (product) {
+            const current = categoryMap.get(product.category) || 0;
+            categoryMap.set(product.category, current + Number(item.total));
+          }
+        });
+      }
 
       const catData = Array.from(categoryMap.entries()).map(([name, value]) => ({
         name,
@@ -112,15 +114,17 @@ export function Reports() {
       }));
       setCategoryData(catData);
 
-      // Top products with quantity sold and revenue (from filtered items)
+      // Top products with quantity sold and revenue (from filtered items) - will be empty if no items
       const productMap = new Map<string, { sold: number; revenue: number }>();
-      filteredItems.forEach((item: any) => {
-        const current = productMap.get(item.product_name) || { sold: 0, revenue: 0 };
-        productMap.set(item.product_name, {
-          sold: current.sold + Number(item.quantity),
-          revenue: current.revenue + Number(item.total)
+      if (filteredItems.length > 0) {
+        filteredItems.forEach((item: any) => {
+          const current = productMap.get(item.product_name) || { sold: 0, revenue: 0 };
+          productMap.set(item.product_name, {
+            sold: current.sold + Number(item.quantity),
+            revenue: current.revenue + Number(item.total)
+          });
         });
-      });
+      }
 
       const top = Array.from(productMap.entries())
         .map(([name, data]) => ({ name, sold: data.sold, revenue: data.revenue }))
@@ -197,7 +201,7 @@ export function Reports() {
                   )}
                 >
                   <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  {dateRange.from ? format(dateRange.from, 'MMM dd, yyyy') : 'From Date'}
+                  {dateRange.from ? format(dateRange.from, 'MMM dd, yyyy') : 'Select Date'}
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-auto p-0" align="start">
@@ -210,31 +214,35 @@ export function Reports() {
               </PopoverContent>
             </Popover>
 
-            <span className="text-gray-400 hidden sm:inline">→</span>
+            {dateRange.from && (
+              <>
+                <span className="text-gray-400 hidden sm:inline">→</span>
 
-            <Popover>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  className={cn(
-                    "justify-start text-left font-normal text-xs sm:text-sm w-full sm:w-auto",
-                    !dateRange.to && "text-muted-foreground"
-                  )}
-                >
-                  <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                  {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : 'To Date'}
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-auto p-0" align="start">
-                <Calendar
-                  mode="single"
-                  selected={dateRange.to}
-                  onSelect={(date) => handleDateSelect('to', date)}
-                  initialFocus
-                  disabled={(date) => dateRange.from ? date < dateRange.from : false}
-                />
-              </PopoverContent>
-            </Popover>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "justify-start text-left font-normal text-xs sm:text-sm w-full sm:w-auto",
+                        !dateRange.to && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                      {dateRange.to ? format(dateRange.to, 'MMM dd, yyyy') : 'End Date (Optional)'}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={dateRange.to}
+                      onSelect={(date) => handleDateSelect('to', date)}
+                      initialFocus
+                      disabled={(date) => dateRange.from ? date < dateRange.from : false}
+                    />
+                  </PopoverContent>
+                </Popover>
+              </>
+            )}
 
             {(dateRange.from || dateRange.to) && (
               <Button
@@ -247,9 +255,12 @@ export function Reports() {
               </Button>
             )}
 
-            {dateRange.from && dateRange.to && (
+            {dateRange.from && (
               <span className="text-sm text-gray-600 bg-blue-50 px-3 py-1 rounded-full">
-                Showing data from {format(dateRange.from, 'MMM dd')} to {format(dateRange.to, 'MMM dd, yyyy')}
+                {dateRange.to 
+                  ? `Showing data from ${format(dateRange.from, 'MMM dd')} to ${format(dateRange.to, 'MMM dd, yyyy')}`
+                  : `Showing data for ${format(dateRange.from, 'MMM dd, yyyy')}`
+                }
               </span>
             )}
           </div>

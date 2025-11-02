@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { X, Plus, Trash2, Minus, Package } from 'lucide-react';
+import { Plus, Trash2, Minus, Package } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -221,11 +221,8 @@ export function EditOrderDialog({
     <Dialog open={open} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center justify-between">
-            <span>Edit Order #{order?.id.slice(-6)}</span>
-            <Button variant="ghost" size="icon" onClick={onClose}>
-              <X className="w-4 h-4" />
-            </Button>
+          <DialogTitle>
+            Edit Order #{order?.id.slice(-6)}
           </DialogTitle>
         </DialogHeader>
 
