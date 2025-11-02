@@ -29,7 +29,7 @@ export const generateDailyReportPDF = (reportData: DailyReportData, currencySymb
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(26);
   doc.setFont('helvetica', 'bold');
-  doc.text('FUDE Studio Dubai', pageWidth / 2, 15, { align: 'center' });
+  doc.text('James Cafe', pageWidth / 2, 15, { align: 'center' });
   
   doc.setFontSize(18);
   doc.text('End of Day Report', pageWidth / 2, 28, { align: 'center' });
@@ -231,7 +231,7 @@ export const generateDailyReportPDF = (reportData: DailyReportData, currencySymb
     );
     
     doc.text(
-      '© 2025 FUDE Studio Dubai - Confidential',
+      '© 2025 James Cafe - Confidential',
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 5,
       { align: 'center' }

@@ -304,16 +304,262 @@ export function Reports() {
     }
   };
 
-  const exportToCSV = () => {
-    const headers = ['Product', 'Quantity Sold', 'Revenue'];
-    const rows = topProducts.map((p) => [p.name, p.sold, p.revenue.toFixed(2)]);
-    const csv = [headers, ...rows].map((row) => row.join(',')).join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `sales-report-${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    a.click();
+  const exportToCSV = async () => {
+    try {
+      // Use the current filtered date range
+      const startDate = dateRange.from ? startOfDay(dateRange.from) : startOfDay(new Date());
+      const endDate = dateRange.to ? endOfDay(dateRange.to) : endOfDay(new Date());
+      
+      // Fetch all data
+      const ordersSnapshot = await getDocs(collection(db, 'orders'));
+      const allOrders = ordersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Order[];
+      
+      // Filter for selected date range and paid orders only
+      const filteredOrders = allOrders.filter(order => {
+        const orderDate = new Date(order.created_at);
+        return isWithinInterval(orderDate, { start: startDate, end: endDate }) && 
+               order.payment_status === 'Paid';
+      });
+      
+      if (filteredOrders.length === 0) {
+        toast({
+          title: 'No Data',
+          description: 'No paid orders found for the selected date range',
+          variant: 'destructive'
+        });
+        return;
+      }
+
+      // Fetch order items
+      const itemsSnapshot = await getDocs(collection(db, 'order_items'));
+      const allItems = itemsSnapshot.docs.map(doc => doc.data());
+      
+      const filteredOrderIds = new Set(filteredOrders.map(o => o.id));
+      const filteredItems = allItems.filter((item: any) => filteredOrderIds.has(item.order_id));
+
+      // Fetch products for category information
+      const productsSnapshot = await getDocs(collection(db, 'products'));
+      const allProducts = productsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Product[];
+      const productMap = new Map(allProducts.map(p => [p.name, p]));
+
+      // Build accounting-focused CSV data
+      let csvContent = '';
+      
+      // === ACCOUNTING SUMMARY ===
+      const totalRevenue = filteredOrders.reduce((sum, o) => sum + Number(o.total), 0);
+      const totalCashSales = filteredOrders.filter(o => o.payment_mode === 'Cash').reduce((sum, o) => sum + Number(o.total), 0);
+      const totalCardSales = filteredOrders.filter(o => o.payment_mode === 'Card').reduce((sum, o) => sum + Number(o.total), 0);
+      const totalOnlineSales = filteredOrders.filter(o => o.payment_mode === 'Online').reduce((sum, o) => sum + Number(o.total), 0);
+      const netSales = filteredOrders.reduce((sum, o) => sum + Number(o.subtotal), 0);
+      const taxCollected = filteredOrders.reduce((sum, o) => sum + Number(o.tax), 0);
+      const totalItemsSold = filteredItems.reduce((sum, item: any) => sum + Number(item.quantity), 0);
+
+      csvContent += `FUDE Studio Dubai - Accounting Report\n`;
+      csvContent += `Period: ${format(startDate, 'dd/MM/yyyy')}${dateRange.to ? ` to ${format(endDate, 'dd/MM/yyyy')}` : ''}\n`;
+      csvContent += `Generated: ${format(new Date(), 'dd/MM/yyyy HH:mm')}\n`;
+      csvContent += `Currency: ${settings.currency}\n\n`;
+      
+      csvContent += `FINANCIAL SUMMARY\n`;
+      csvContent += `Account,Debit (${settings.currency}),Credit (${settings.currency})\n`;
+      csvContent += `Gross Sales,,${totalRevenue.toFixed(2)}\n`;
+      csvContent += `Sales Tax Collected,,${taxCollected.toFixed(2)}\n`;
+      csvContent += `Net Sales Revenue,,${netSales.toFixed(2)}\n`;
+      csvContent += `Total Transactions,${filteredOrders.length},\n`;
+      csvContent += `Total Units Sold,${totalItemsSold},\n\n`;
+
+      // === PAYMENT RECONCILIATION ===
+      csvContent += `PAYMENT RECONCILIATION\n`;
+      csvContent += `Payment Method,Transaction Count,Amount (${settings.currency}),% of Total\n`;
+      csvContent += `Cash Payments,${filteredOrders.filter(o => o.payment_mode === 'Cash').length},${totalCashSales.toFixed(2)},${((totalCashSales / totalRevenue) * 100).toFixed(2)}%\n`;
+      csvContent += `Card Payments,${filteredOrders.filter(o => o.payment_mode === 'Card').length},${totalCardSales.toFixed(2)},${((totalCardSales / totalRevenue) * 100).toFixed(2)}%\n`;
+      csvContent += `Online Payments,${filteredOrders.filter(o => o.payment_mode === 'Online').length},${totalOnlineSales.toFixed(2)},${((totalOnlineSales / totalRevenue) * 100).toFixed(2)}%\n`;
+      csvContent += `TOTAL,${filteredOrders.length},${totalRevenue.toFixed(2)},100.00%\n\n`;
+      
+      // === CASH RECONCILIATION ===
+      csvContent += `CASH DRAWER RECONCILIATION\n`;
+      csvContent += `Description,Amount (${settings.currency})\n`;
+      csvContent += `Opening Balance,0.00\n`;
+      csvContent += `Cash Sales,${totalCashSales.toFixed(2)}\n`;
+      csvContent += `Expected Cash,${totalCashSales.toFixed(2)}\n`;
+      csvContent += `Actual Cash Counted,\n`;
+      csvContent += `Difference (Over/Short),\n\n`;
+
+      // === SALES LEDGER (TRANSACTION LOG) ===
+      csvContent += `SALES LEDGER - TRANSACTION LOG\n`;
+      csvContent += `Date,Time,Invoice No,Payment Method,Subtotal (${settings.currency}),Tax (${settings.currency}),Total (${settings.currency}),Staff,Status\n`;
+      
+      // Sort orders by date/time for ledger
+      const sortedOrders = [...filteredOrders].sort((a, b) => 
+        new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      );
+      
+      sortedOrders.forEach(order => {
+        const orderDate = new Date(order.created_at);
+        csvContent += `${format(orderDate, 'dd/MM/yyyy')},${format(orderDate, 'HH:mm:ss')},${order.id},${order.payment_mode || 'N/A'},${Number(order.subtotal).toFixed(2)},${Number(order.tax).toFixed(2)},${Number(order.total).toFixed(2)},"${order.staff_name || 'Unknown'}",${order.payment_status}\n`;
+      });
+      csvContent += `\n`;
+      
+      csvContent += `LEDGER TOTALS\n`;
+      csvContent += `Description,Amount (${settings.currency})\n`;
+      csvContent += `Total Subtotal,${netSales.toFixed(2)}\n`;
+      csvContent += `Total Tax,${taxCollected.toFixed(2)}\n`;
+      csvContent += `Total Amount,${totalRevenue.toFixed(2)}\n\n`;
+
+      // === REVENUE BY CATEGORY (For P&L) ===
+      const categoryMap = new Map<string, { revenue: number; itemsSold: number; cost: number }>();
+      filteredItems.forEach((item: any) => {
+        const product = productMap.get(item.product_name);
+        const category = product?.category || 'Uncategorized';
+        const current = categoryMap.get(category) || { revenue: 0, itemsSold: 0, cost: 0 };
+        const productCost = (product as any)?.cost || 0;
+        categoryMap.set(category, {
+          revenue: current.revenue + Number(item.total),
+          itemsSold: current.itemsSold + Number(item.quantity),
+          cost: current.cost + (Number(productCost) * Number(item.quantity))
+        });
+      });
+      
+      const categoryBreakdown = Array.from(categoryMap.entries())
+        .map(([category, data]) => ({ 
+          category, 
+          revenue: data.revenue, 
+          itemsSold: data.itemsSold,
+          cost: data.cost,
+          grossProfit: data.revenue - data.cost
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      csvContent += `REVENUE BY CATEGORY\n`;
+      csvContent += `Category,Units Sold,Revenue (${settings.currency}),COGS (${settings.currency}),Gross Profit (${settings.currency}),Margin %\n`;
+      categoryBreakdown.forEach(cat => {
+        const margin = cat.revenue > 0 ? ((cat.grossProfit / cat.revenue) * 100).toFixed(2) : '0.00';
+        csvContent += `"${cat.category}",${cat.itemsSold},${cat.revenue.toFixed(2)},${cat.cost.toFixed(2)},${cat.grossProfit.toFixed(2)},${margin}%\n`;
+      });
+      const totalCost = categoryBreakdown.reduce((sum, cat) => sum + cat.cost, 0);
+      const totalGrossProfit = totalRevenue - totalCost;
+      csvContent += `TOTAL,${totalItemsSold},${totalRevenue.toFixed(2)},${totalCost.toFixed(2)},${totalGrossProfit.toFixed(2)},${((totalGrossProfit / totalRevenue) * 100).toFixed(2)}%\n\n`;
+
+      // === INVENTORY SOLD (Stock Movement) ===
+      const productSalesMap = new Map<string, { quantity: number; revenue: number; cost: number }>();
+      filteredItems.forEach((item: any) => {
+        const product = productMap.get(item.product_name);
+        const current = productSalesMap.get(item.product_name) || { quantity: 0, revenue: 0, cost: 0 };
+        const productCost = (product as any)?.cost || 0;
+        productSalesMap.set(item.product_name, {
+          quantity: current.quantity + Number(item.quantity),
+          revenue: current.revenue + Number(item.total),
+          cost: current.cost + (Number(productCost) * Number(item.quantity))
+        });
+      });
+      
+      const productSales = Array.from(productSalesMap.entries())
+        .map(([name, data]) => ({ 
+          name, 
+          quantity: data.quantity, 
+          revenue: data.revenue,
+          cost: data.cost,
+          profit: data.revenue - data.cost
+        }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      csvContent += `INVENTORY SOLD (Stock Movement)\n`;
+      csvContent += `Product Name,Quantity Sold,Unit Price Avg (${settings.currency}),Revenue (${settings.currency}),COGS (${settings.currency}),Profit (${settings.currency})\n`;
+      productSales.forEach(product => {
+        const avgPrice = product.revenue / product.quantity;
+        csvContent += `"${product.name}",${product.quantity},${avgPrice.toFixed(2)},${product.revenue.toFixed(2)},${product.cost.toFixed(2)},${product.profit.toFixed(2)}\n`;
+      });
+      csvContent += `\n`;
+
+      // === PAYMENT METHOD BREAKDOWN BY DAY ===
+      const dailyPaymentMap = new Map<string, { cash: number; card: number; online: number }>();
+      sortedOrders.forEach(order => {
+        const dateKey = format(new Date(order.created_at), 'dd/MM/yyyy');
+        const current = dailyPaymentMap.get(dateKey) || { cash: 0, card: 0, online: 0 };
+        const amount = Number(order.total);
+        
+        if (order.payment_mode === 'Cash') current.cash += amount;
+        else if (order.payment_mode === 'Card') current.card += amount;
+        else if (order.payment_mode === 'Online') current.online += amount;
+        
+        dailyPaymentMap.set(dateKey, current);
+      });
+
+      csvContent += `DAILY PAYMENT BREAKDOWN\n`;
+      csvContent += `Date,Cash (${settings.currency}),Card (${settings.currency}),Online (${settings.currency}),Total (${settings.currency})\n`;
+      Array.from(dailyPaymentMap.entries())
+        .sort((a, b) => a[0].localeCompare(b[0]))
+        .forEach(([date, payments]) => {
+          const total = payments.cash + payments.card + payments.online;
+          csvContent += `${date},${payments.cash.toFixed(2)},${payments.card.toFixed(2)},${payments.online.toFixed(2)},${total.toFixed(2)}\n`;
+        });
+      csvContent += `\n`;
+
+      // === STAFF SALES LEDGER ===
+      const staffMap = new Map<string, { orders: number; revenue: number; cash: number; card: number; online: number }>();
+      filteredOrders.forEach(order => {
+        const staffName = order.staff_name || 'Unknown';
+        const current = staffMap.get(staffName) || { orders: 0, revenue: 0, cash: 0, card: 0, online: 0 };
+        const amount = Number(order.total);
+        
+        current.orders += 1;
+        current.revenue += amount;
+        if (order.payment_mode === 'Cash') current.cash += amount;
+        else if (order.payment_mode === 'Card') current.card += amount;
+        else if (order.payment_mode === 'Online') current.online += amount;
+        
+        staffMap.set(staffName, current);
+      });
+      
+      const staffPerformance = Array.from(staffMap.entries())
+        .map(([staff, data]) => ({ staff, ...data }))
+        .sort((a, b) => b.revenue - a.revenue);
+
+      csvContent += `STAFF SALES LEDGER\n`;
+      csvContent += `Staff Member,Transactions,Total Sales (${settings.currency}),Cash (${settings.currency}),Card (${settings.currency}),Online (${settings.currency}),Avg Transaction (${settings.currency})\n`;
+      staffPerformance.forEach(staff => {
+        const avgTransaction = staff.revenue / staff.orders;
+        csvContent += `"${staff.staff}",${staff.orders},${staff.revenue.toFixed(2)},${staff.cash.toFixed(2)},${staff.card.toFixed(2)},${staff.online.toFixed(2)},${avgTransaction.toFixed(2)}\n`;
+      });
+      csvContent += `\n`;
+
+      // === DETAILED LINE ITEMS (For Auditing) ===
+      csvContent += `DETAILED LINE ITEMS (Invoice Items)\n`;
+      csvContent += `Invoice No,Date,Time,Product,Category,Qty,Unit Price (${settings.currency}),Line Total (${settings.currency}),Payment Method,Staff\n`;
+      sortedOrders.forEach(order => {
+        const orderDate = new Date(order.created_at);
+        const orderItems = filteredItems.filter((item: any) => item.order_id === order.id);
+        orderItems.forEach((item: any) => {
+          const product = productMap.get(item.product_name);
+          const category = product?.category || 'N/A';
+          csvContent += `${order.id},${format(orderDate, 'dd/MM/yyyy')},${format(orderDate, 'HH:mm')},` +
+                       `"${item.product_name}","${category}",${item.quantity},${Number(item.price).toFixed(2)},` +
+                       `${Number(item.total).toFixed(2)},${order.payment_mode || 'N/A'},"${order.staff_name || 'Unknown'}"\n`;
+        });
+      });
+
+      // Download CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const dateStr = format(startDate, 'dd-MM-yyyy');
+      const endDateStr = dateRange.to ? `_to_${format(endDate, 'dd-MM-yyyy')}` : '';
+      a.download = `FUDE_Accounting_Report_${dateStr}${endDateStr}.csv`;
+      a.click();
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: 'Accounting Report Generated',
+        description: `Report has been downloaded and ready for accounting software`,
+      });
+    } catch (error) {
+      console.error('Error generating CSV report:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to generate CSV report',
+        variant: 'destructive'
+      });
+    }
   };
 
   const handleDateSelect = (type: 'from' | 'to', date: Date | undefined) => {
@@ -350,16 +596,22 @@ export function Reports() {
               <ChevronDown className="w-4 h-4 ml-2" />
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuContent align="end" className="w-64">
             <DropdownMenuItem onClick={generateSettlementReport}>
               <FileText className="w-4 h-4 mr-2" />
-              Settlement Report
-              <span className="ml-auto text-xs text-gray-500">PDF</span>
+              <div className="flex flex-col">
+                <span>Settlement Report</span>
+                <span className="text-xs text-gray-500">For printing & signatures</span>
+              </div>
+              <span className="ml-auto text-xs font-semibold text-gray-500">PDF</span>
             </DropdownMenuItem>
             <DropdownMenuItem onClick={exportToCSV}>
               <FileText className="w-4 h-4 mr-2" />
-              Product Sales Report
-              <span className="ml-auto text-xs text-gray-500">CSV</span>
+              <div className="flex flex-col">
+                <span>Accounting Report</span>
+                <span className="text-xs text-gray-500">For bookkeeping software</span>
+              </div>
+              <span className="ml-auto text-xs font-semibold text-gray-500">CSV</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

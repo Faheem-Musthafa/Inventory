@@ -14,7 +14,7 @@ export const generateStaffSalesPDF = (report: StaffSalesReport, currencySymbol: 
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.text('FUDE Studio Dubai', pageWidth / 2, 15, { align: 'center' });
+  doc.text('James Cafe', pageWidth / 2, 15, { align: 'center' });
   
   doc.setFontSize(16);
   doc.text('Staff Sales Report', pageWidth / 2, 28, { align: 'center' });

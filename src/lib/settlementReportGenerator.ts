@@ -39,7 +39,7 @@ export function generateSettlementReportPDF(
   doc.setTextColor(255, 255, 255);
   doc.setFontSize(24);
   doc.setFont('helvetica', 'bold');
-  doc.text('FUDE Studio Dubai', pageWidth / 2, 15, { align: 'center' });
+  doc.text('James Cafe', pageWidth / 2, 15, { align: 'center' });
   
   doc.setFontSize(16);
   doc.setFont('helvetica', 'normal');
@@ -463,7 +463,7 @@ export function generateSettlementReportPDF(
       pageHeight - 10,
       { align: 'center' }
     );
-    doc.text('FUDE Studio Dubai - Confidential', pageWidth - 14, pageHeight - 10, { align: 'right' });
+    doc.text('James Cafe - Confidential', pageWidth - 14, pageHeight - 10, { align: 'right' });
   }
 
   // Save the PDF
