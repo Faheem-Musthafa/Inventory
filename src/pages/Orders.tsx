@@ -407,6 +407,7 @@ export function Orders() {
                         <Select
                           value={order.payment_status}
                           onValueChange={(value) => updateOrderStatus(order.id, value)}
+                          disabled={!userIsManager && order.payment_status === 'Paid'}
                         >
                           <SelectTrigger className="w-[100px] sm:w-[120px] h-8 text-xs sm:text-sm">
                             <SelectValue />
@@ -418,9 +419,11 @@ export function Orders() {
                             <SelectItem value="Pending">
                               <span className="text-yellow-700 text-xs sm:text-sm">Pending</span>
                             </SelectItem>
-                            <SelectItem value="Cancelled">
-                              <span className="text-red-700 text-xs sm:text-sm">Cancelled</span>
-                            </SelectItem>
+                            {userIsManager && (
+                              <SelectItem value="Cancelled">
+                                <span className="text-red-700 text-xs sm:text-sm">Cancelled</span>
+                              </SelectItem>
+                            )}
                           </SelectContent>
                         </Select>
                       </TableCell>
