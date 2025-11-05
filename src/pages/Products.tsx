@@ -33,6 +33,12 @@ export function Products() {
   const [completedOrder, setCompletedOrder] = useState<OrderWithItems | null>(null);
   const [paymentMethod, setPaymentMethod] = useState<'Cash' | 'Card'>('Cash');
   const [cartDrawerOpen, setCartDrawerOpen] = useState(false);
+  // Table management states
+  const [enableTableMode, setEnableTableMode] = useState(true);
+  const [numberOfTables, setNumberOfTables] = useState(10);
+  const [tablePrefix, setTablePrefix] = useState('Table');
+  const [selectedTable, setSelectedTable] = useState<number>(0);
+  const [covers, setCovers] = useState<number>(1);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -48,6 +54,11 @@ export function Products() {
         const settings = docSnap.data();
         setCurrencySymbol(settings.currency || 'AED');
         setTaxRate((settings.taxRate || 10) / 100);
+        // Load table management settings
+        setEnableTableMode(settings.enableTableMode !== undefined ? settings.enableTableMode : true);
+        setNumberOfTables(settings.numberOfTables || 10);
+        setTablePrefix(settings.tablePrefix || 'Table');
+        setCovers(settings.defaultCovers || 1);
       }
     } catch (error) {
       console.error('Error loading settings:', error);
@@ -190,6 +201,8 @@ export function Products() {
         created_at: new Date().toISOString(),
         customer_name: 'Walk-in Customer', // Default customer name
         staff_name: staffName, // Add staff name who took the order
+        table_number: enableTableMode ? selectedTable : undefined,
+        covers: enableTableMode ? covers : undefined,
       };
 
       const orderRef = await addDoc(collection(db, 'orders'), orderData);
@@ -585,6 +598,41 @@ export function Products() {
                     <span className="text-[#bc994e]">{formatCurrency(cartTotal)}</span>
                   </div>
                 </div>
+
+                {/* Table Selection */}
+                {enableTableMode && (
+                  <div className="mb-4 p-3 bg-white rounded-lg border">
+                    <p className="text-sm font-medium text-gray-700 mb-2">Dine-In Details</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Table</label>
+                        <select
+                          value={selectedTable}
+                          onChange={(e) => setSelectedTable(parseInt(e.target.value))}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#c7a956]"
+                        >
+                          <option value={0}>No Table</option>
+                          {Array.from({ length: numberOfTables }, (_, i) => i + 1).map((num) => (
+                            <option key={num} value={num}>
+                              {tablePrefix} {num}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="text-xs text-gray-600 mb-1 block">Covers</label>
+                        <input
+                          type="number"
+                          min="1"
+                          max="20"
+                          value={covers}
+                          onChange={(e) => setCovers(parseInt(e.target.value) || 1)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#c7a956]"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Payment Method Selection */}
                 <div className="mb-4 p-3 bg-white rounded-lg border">

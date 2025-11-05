@@ -41,6 +41,8 @@ export interface Order {
   tax: number;
   total: number;
   created_at: string;
+  table_number?: number;
+  covers?: number;
 }
 
 export interface OrderItem {

@@ -23,6 +23,8 @@ interface StoreSettings {
   staffName: string;
   instagramHandle: string;
   currency: string;
+  invoiceFooter: string;
+  showInstagram: boolean;
 }
 
 const DEFAULT_SETTINGS: StoreSettings = {
@@ -36,6 +38,8 @@ const DEFAULT_SETTINGS: StoreSettings = {
   staffName: 'Daniel',
   instagramHandle: '@jamescafe.ae',
   currency: 'AED',
+  invoiceFooter: 'Thank you for your business!\nPlease visit again',
+  showInstagram: true,
 };
 
 export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
@@ -64,6 +68,8 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           staffName: data.staffName || DEFAULT_SETTINGS.staffName,
           instagramHandle: data.instagramHandle || DEFAULT_SETTINGS.instagramHandle,
           currency: data.currency || DEFAULT_SETTINGS.currency,
+          invoiceFooter: data.invoiceFooter || DEFAULT_SETTINGS.invoiceFooter,
+          showInstagram: data.showInstagram !== undefined ? data.showInstagram : DEFAULT_SETTINGS.showInstagram,
         });
       }
     } catch (error) {
@@ -286,12 +292,14 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           
           <div className="dine-in">DINE-IN</div>
           
-          <div className="table-info">TABLE 0</div>
+          <div className="table-info">
+            {order.table_number ? `TABLE ${order.table_number}` : 'TAKEAWAY'}
+          </div>
           
           <div className="order-details">
             <div className="order-row">
-              <span>Number of Covers: 1</span>
-              <span>Staff: {settings.staffName}</span>
+              <span>Number of Covers: {order.covers || 1}</span>
+              <span>Staff: {order.staff_name || settings.staffName}</span>
             </div>
             <div className="order-row">
               <span>{format(new Date(order.created_at), 'dd-MMM-yyyy')}</span>
@@ -319,36 +327,43 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             </div>
           ))}
 
+          <div className="divider-dashed"></div>
+
           <div className="totals">
-            <div className="total-row">
-              <span>Sub Total</span>
-              <span>{Number(order.subtotal).toFixed(2)}</span>
-            </div>
             <div className="total-row grand-total">
-              <span>Total</span>
+              <span>Grand Total</span>
               <span>{settings.currency} {Number(order.total).toFixed(2)}</span>
             </div>
           </div>
 
+          <div className="divider-dashed"></div>
+
           <div className="tax-details">
+            <div style={{ fontWeight: 'bold', marginBottom: '2mm', textAlign: 'center' }}>VAT BREAKDOWN</div>
             <div className="tax-row">
-              <span>Net Amt</span>
-              <span>Tax</span>
-              <span>Tax Amt</span>
-              <span>Total</span>
+              <span>Net Amount</span>
+              <span>{Number(order.subtotal).toFixed(2)}</span>
             </div>
             <div className="tax-row">
-              <span>{Number(order.subtotal).toFixed(2)}</span>
-              <span>VAT(5.00%)</span>
+              <span>VAT (5%)</span>
               <span>{Number(order.tax).toFixed(2)}</span>
+            </div>
+            <div className="tax-row" style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '1mm', marginTop: '1mm' }}>
+              <span>Total Inc. VAT</span>
               <span>{Number(order.total).toFixed(2)}</span>
             </div>
           </div>
 
           <div className="footer">
-            <div className="thank-you">Thank you</div>
-            <div>Please follow us on Instagram</div>
-            <div>{settings.instagramHandle}</div>
+            {settings.invoiceFooter.split('\n').map((line, index) => (
+              <div key={index} className={index === 0 ? 'thank-you' : ''}>{line}</div>
+            ))}
+            {settings.showInstagram && (
+              <>
+                <div>Please follow us on Instagram</div>
+                <div>{settings.instagramHandle}</div>
+              </>
+            )}
           </div>
         </div>
 
@@ -368,13 +383,15 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           {/* Invoice Title */}
           <div className="text-center font-bold text-lg mb-2">TAX INVOICE</div>
           <div className="text-center text-sm mb-1">DINE-IN</div>
-          <div className="text-center font-bold text-lg mb-3">TABLE 0</div>
+          <div className="text-center font-bold text-lg mb-3">
+            {order.table_number ? `TABLE ${order.table_number}` : 'TAKEAWAY'}
+          </div>
 
           {/* Order Details */}
           <div className="text-xs mb-3">
             <div className="flex justify-between mb-1">
-              <span>Number of Covers: 1</span>
-              <span>Staff: {settings.staffName}</span>
+              <span>Number of Covers: {order.covers || 1}</span>
+              <span>Staff: {order.staff_name || settings.staffName}</span>
             </div>
             <div className="flex justify-between">
               <span>{format(new Date(order.created_at), 'dd-MMM-yyyy')}</span>
@@ -406,37 +423,42 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
 
           {/* Totals */}
           <div className="border-t-2 border-gray-900 mt-3 pt-3">
-            <div className="flex justify-between text-sm mb-2">
-              <span>Sub Total</span>
-              <span className="font-medium">{Number(order.subtotal).toFixed(2)}</span>
-            </div>
-            <div className="flex justify-between font-bold text-base border-t-2 border-gray-900 pt-2">
-              <span>Total</span>
+            <div className="flex justify-between font-bold text-base">
+              <span>Grand Total</span>
               <span>{settings.currency} {Number(order.total).toFixed(2)}</span>
             </div>
           </div>
 
-          {/* Tax Details */}
-          <div className="border-t border-dashed border-gray-400 mt-3 pt-3 text-xs">
-            <div className="grid grid-cols-4 gap-2 font-semibold mb-1">
-              <span>Net Amt</span>
-              <span>Tax</span>
-              <span>Tax Amt</span>
-              <span className="text-right">Total</span>
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              <span>{Number(order.subtotal).toFixed(2)}</span>
-              <span>VAT(5.00%)</span>
-              <span>{Number(order.tax).toFixed(2)}</span>
-              <span className="text-right">{Number(order.total).toFixed(2)}</span>
+          {/* VAT Breakdown */}
+          <div className="border-t border-dashed border-gray-400 mt-3 pt-3">
+            <div className="text-xs font-bold mb-2 text-center">VAT BREAKDOWN</div>
+            <div className="text-xs space-y-1">
+              <div className="flex justify-between">
+                <span>Net Amount:</span>
+                <span>{Number(order.subtotal).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between">
+                <span>VAT (5%):</span>
+                <span>{Number(order.tax).toFixed(2)}</span>
+              </div>
+              <div className="flex justify-between font-bold border-t-2 border-gray-900 pt-1 mt-1">
+                <span>Total Inc. VAT:</span>
+                <span>{Number(order.total).toFixed(2)}</span>
+              </div>
             </div>
           </div>
 
           {/* Footer */}
           <div className="text-center mt-4 pt-3 border-t border-dashed border-gray-400 text-xs">
-            <p className="font-bold mb-1">Thank you</p>
-            <p>Please follow us on Instagram</p>
-            <p>{settings.instagramHandle}</p>
+            {settings.invoiceFooter.split('\n').map((line, index) => (
+              <p key={index} className={index === 0 ? 'font-bold mb-1' : 'mb-1'}>{line}</p>
+            ))}
+            {settings.showInstagram && (
+              <>
+                <p>Please follow us on Instagram</p>
+                <p>{settings.instagramHandle}</p>
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}
