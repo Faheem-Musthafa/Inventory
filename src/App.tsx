@@ -6,12 +6,14 @@ import { Products } from '@/pages/Products';
 import { Orders } from '@/pages/Orders';
 import { Reports } from '@/pages/Reports';
 import { Settings } from '@/pages/Settings';
+import { Archive } from '@/pages/Archive';
 import { Login } from '@/pages/Login';
 import { Toaster } from '@/components/ui/toaster';
 import { isAuthenticated, clearCurrentUser, getCurrentUser, isStaff } from '@/lib/auth';
 import { SpeedInsights } from '@vercel/speed-insights/react';
 import { generateStaffReport, clearStaffSales, getSalesFromStorage } from '@/lib/salesTracking';
 import { generateStaffSalesPDF } from '@/lib/pdfGenerator';
+import { scheduleArchive } from '@/lib/archiveSystem';
 
 
 
@@ -27,6 +29,14 @@ function App() {
     setIsAuthenticatedState(authStatus);
     setIsLoading(false);
   }, []);
+
+  // Initialize automatic archive system (runs at 2:00 AM daily)
+  useEffect(() => {
+    if (isAuthenticatedState) {
+      console.log('Initializing automatic archive system...');
+      scheduleArchive();
+    }
+  }, [isAuthenticatedState]);
 
   const handleLogin = () => {
     setIsAuthenticatedState(true);
@@ -104,6 +114,8 @@ function App() {
         return <Orders />;
       case 'reports':
         return <Reports />;
+      case 'archive':
+        return <Archive />;
       case 'settings':
         return <Settings />;
       default:

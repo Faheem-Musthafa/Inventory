@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings } from 'lucide-react';
+import { LayoutDashboard, Package, ShoppingCart, BarChart3, Settings, Archive } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { db } from '@/lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -17,6 +17,7 @@ const navigation = [
   { name: 'Orders', icon: ShoppingCart, id: 'orders' },
   { name: 'Dashboard', icon: LayoutDashboard, id: 'dashboard' },
   { name: 'Reports', icon: BarChart3, id: 'reports' },
+  { name: 'Archive', icon: Archive, id: 'archive' },
   { name: 'Settings', icon: Settings, id: 'settings' },
 ];
 

@@ -38,5 +38,29 @@ service cloud.firestore {
       // Allow anyone to create, update, delete settings (adjust based on your auth requirements)
       allow create, update, delete: if true;
     }
+    
+    // Archived orders collection
+    match /archived_orders/{archiveId} {
+      // Allow anyone to read archived orders
+      allow read: if true;
+      
+      // Allow anyone to create archived orders (for automatic archiving)
+      allow create: if true;
+      
+      // Prevent deletion and updates of archived orders (read-only after creation)
+      allow update, delete: if false;
+    }
+    
+    // Archive metadata collection
+    match /archive_metadata/{metadataId} {
+      // Allow anyone to read archive metadata
+      allow read: if true;
+      
+      // Allow anyone to create archive metadata
+      allow create: if true;
+      
+      // Prevent deletion and updates of archive metadata
+      allow update, delete: if false;
+    }
   }
 }

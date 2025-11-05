@@ -77,7 +77,7 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
     const printContent = document.getElementById('invoice-print-content');
     if (!printContent) return;
 
-    const printWindow = window.open('', '', 'width=300,height=600');
+    const printWindow = window.open('', '', 'width=302,height=718');
     if (!printWindow) return;
 
     printWindow.document.write(`
@@ -92,131 +92,153 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             }
             body {
               font-family: 'Courier New', monospace;
-              padding: 10px;
-              max-width: 300px;
+              width: 80mm;
+              max-width: 80mm;
+              height: 190mm;
+              padding: 3mm;
               margin: 0 auto;
-              font-size: 12px;
-              line-height: 1.4;
+              font-size: 9px;
+              line-height: 1.2;
+              overflow: hidden;
             }
             .header {
               text-align: center;
-              margin-bottom: 15px;
+              margin-bottom: 3mm;
               border-bottom: 1px dashed #000;
-              padding-bottom: 10px;
+              padding-bottom: 2mm;
             }
             .store-name {
-              font-size: 24px;
+              font-size: 16px;
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 1mm;
+              letter-spacing: 1px;
             }
             .store-details {
-              font-size: 10px;
+              font-size: 8px;
               line-height: 1.3;
             }
             .text-underline {
               text-decoration: underline;
               text-decoration-color: gray;
               text-decoration-thickness: 0.5px;
-              text-underline-offset: 2px;
+              text-underline-offset: 1px;
             }
             .divider {
               border-bottom: 1px solid #000;
-              margin: 10px 0;
+              margin: 2mm 0;
             }
             .divider-dashed {
               border-bottom: 1px dashed #000;
-              margin: 10px 0;
+              margin: 2mm 0;
             }
             .invoice-title {
               text-align: center;
               font-weight: bold;
-              font-size: 14px;
-              margin: 10px 0;
+              font-size: 11px;
+              margin: 2mm 0;
             }
             .dine-in {
               text-align: center;
-              font-size: 11px;
-              margin-bottom: 5px;
+              font-size: 9px;
+              margin-bottom: 1mm;
             }
             .table-info {
               text-align: center;
               font-weight: bold;
-              font-size: 14px;
-              margin-bottom: 10px;
+              font-size: 11px;
+              margin-bottom: 2mm;
             }
             .order-details {
-              font-size: 10px;
-              margin-bottom: 10px;
+              font-size: 8px;
+              margin-bottom: 2mm;
             }
             .order-row {
               display: flex;
               justify-content: space-between;
+              margin-bottom: 1mm;
             }
             .items-header {
               display: flex;
               justify-content: space-between;
               font-weight: bold;
-              margin: 10px 0 5px 0;
-              font-size: 11px;
+              margin: 2mm 0 1mm 0;
+              font-size: 9px;
             }
             .item-row {
-              margin: 5px 0;
-              font-size: 11px;
-            }
-            .item-name {
-              margin-bottom: 2px;
+              margin: 1mm 0;
+              font-size: 9px;
             }
             .item-details {
               display: flex;
               justify-content: space-between;
-              padding-left: 10px;
+              align-items: flex-start;
+            }
+            .item-qty {
+              width: 12mm;
+              flex-shrink: 0;
+            }
+            .item-name {
+              flex: 1;
+              padding: 0 2mm;
+              word-wrap: break-word;
+              overflow-wrap: break-word;
+              max-width: 45mm;
+            }
+            .item-price {
+              width: 15mm;
+              text-align: right;
+              flex-shrink: 0;
             }
             .totals {
-              margin-top: 10px;
+              margin-top: 2mm;
               border-top: 1px solid #000;
-              padding-top: 10px;
+              padding-top: 2mm;
             }
             .total-row {
               display: flex;
               justify-content: space-between;
-              margin: 5px 0;
-              font-size: 11px;
+              margin: 1mm 0;
+              font-size: 9px;
             }
             .grand-total {
               font-weight: bold;
-              font-size: 13px;
-              margin-top: 10px;
-              padding-top: 10px;
+              font-size: 11px;
+              margin-top: 2mm;
+              padding-top: 2mm;
               border-top: 1px solid #000;
             }
             .tax-details {
-              margin-top: 10px;
+              margin-top: 2mm;
               border-top: 1px dashed #000;
-              padding-top: 10px;
-              font-size: 10px;
+              padding-top: 2mm;
+              font-size: 7px;
             }
             .tax-row {
               display: flex;
               justify-content: space-between;
-              margin: 3px 0;
+              margin: 1mm 0;
+            }
+            .tax-row span {
+              flex: 1;
+              text-align: center;
             }
             .footer {
               text-align: center;
-              margin-top: 15px;
+              margin-top: 3mm;
               border-top: 1px dashed #000;
-              padding-top: 10px;
-              font-size: 11px;
+              padding-top: 2mm;
+              font-size: 8px;
             }
             .thank-you {
               font-weight: bold;
-              margin-bottom: 5px;
+              margin-bottom: 1mm;
             }
             @media print {
               body {
-                padding: 5px;
+                padding: 3mm;
               }
               @page {
-                size: 80mm auto;
+                size: 80mm 190mm;
                 margin: 0;
               }
             }
@@ -280,9 +302,9 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           <div className="divider-dashed"></div>
 
           <div className="items-header">
-            <span>Qty</span>
-            <span style={{ flex: 1, paddingLeft: '20px' }}>Item</span>
-            <span>Price</span>
+            <span style={{ width: '12mm' }}>Qty</span>
+            <span style={{ flex: 1, paddingLeft: '2mm' }}>Item</span>
+            <span style={{ width: '15mm', textAlign: 'right' }}>Price</span>
           </div>
 
           <div className="divider-dashed"></div>
@@ -290,9 +312,9 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           {order.order_items.map((item) => (
             <div key={item.id} className="item-row">
               <div className="item-details">
-                <span>{item.quantity}</span>
-                <span style={{ flex: 1, paddingLeft: '10px' }}>{item.product_name}</span>
-                <span>{Number(item.total).toFixed(2)}</span>
+                <span className="item-qty">{item.quantity}</span>
+                <span className="item-name">{item.product_name}</span>
+                <span className="item-price">{Number(item.total).toFixed(2)}</span>
               </div>
             </div>
           ))}
