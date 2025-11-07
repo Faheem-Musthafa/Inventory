@@ -296,6 +296,10 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             {order.table_number ? `TABLE ${order.table_number}` : 'TAKEAWAY'}
           </div>
           
+          <div className="order-details" style={{ fontSize: '8px' }}>
+            <div style={{ textAlign: 'center', marginBottom: '1mm' }}>{order.id.slice(0, 6)}</div>
+          </div>
+          
           <div className="order-details">
             <div className="order-row">
               <span>Number of Covers: {order.covers || 1}</span>
@@ -330,8 +334,12 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           <div className="divider-dashed"></div>
 
           <div className="totals">
-            <div className="total-row grand-total">
-              <span>Grand Total</span>
+            <div className="total-row" style={{ fontSize: '10px', textAlign: 'right', marginBottom: '1mm' }}>
+              <span>Sub Total</span>
+              <span>{Number(order.subtotal).toFixed(2)}</span>
+            </div>
+            <div className="total-row grand-total" style={{ textAlign: 'right' }}>
+              <span>Total</span>
               <span>{settings.currency} {Number(order.total).toFixed(2)}</span>
             </div>
           </div>
@@ -339,18 +347,17 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           <div className="divider-dashed"></div>
 
           <div className="tax-details">
-            <div style={{ fontWeight: 'bold', marginBottom: '2mm', textAlign: 'center' }}>VAT BREAKDOWN</div>
-            <div className="tax-row">
-              <span>Net Amount</span>
-              <span>{Number(order.subtotal).toFixed(2)}</span>
+            <div className="tax-row" style={{ fontSize: '8px' }}>
+              <span style={{ textAlign: 'left' }}>Net Amt</span>
+              <span>Tax</span>
+              <span>Tax Amt</span>
+              <span style={{ textAlign: 'right' }}>Total</span>
             </div>
-            <div className="tax-row">
-              <span>VAT (5%)</span>
+            <div className="tax-row" style={{ fontSize: '8px' }}>
+              <span style={{ textAlign: 'left' }}>{Number(order.subtotal).toFixed(2)}</span>
+              <span>VAT(5.00%)</span>
               <span>{Number(order.tax).toFixed(2)}</span>
-            </div>
-            <div className="tax-row" style={{ fontWeight: 'bold', borderTop: '1px solid #000', paddingTop: '1mm', marginTop: '1mm' }}>
-              <span>Total Inc. VAT</span>
-              <span>{Number(order.total).toFixed(2)}</span>
+              <span style={{ textAlign: 'right' }}>{Number(order.total).toFixed(2)}</span>
             </div>
           </div>
 
@@ -387,6 +394,9 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
             {order.table_number ? `TABLE ${order.table_number}` : 'TAKEAWAY'}
           </div>
 
+          {/* Order ID */}
+          <div className="text-center text-xs text-gray-600 mb-3">{order.id.slice(0, 6)}</div>
+
           {/* Order Details */}
           <div className="text-xs mb-3">
             <div className="flex justify-between mb-1">
@@ -422,28 +432,35 @@ export function InvoiceDialog({ open, onClose, order }: InvoiceDialogProps) {
           ))}
 
           {/* Totals */}
-          <div className="border-t-2 border-gray-900 mt-3 pt-3">
-            <div className="flex justify-between font-bold text-base">
-              <span>Grand Total</span>
-              <span>{settings.currency} {Number(order.total).toFixed(2)}</span>
+          <div className="border-t border-dashed border-gray-400 mt-3 pt-3">
+            <div className="flex justify-end text-sm mb-2">
+              <div className="flex gap-8">
+                <span>Sub Total</span>
+                <span className="font-medium">{Number(order.subtotal).toFixed(2)}</span>
+              </div>
+            </div>
+            <div className="flex justify-end font-bold text-lg">
+              <div className="flex gap-8">
+                <span>Total</span>
+                <span>{settings.currency} {Number(order.total).toFixed(2)}</span>
+              </div>
             </div>
           </div>
 
-          {/* VAT Breakdown */}
+          {/* Tax Breakdown Table */}
           <div className="border-t border-dashed border-gray-400 mt-3 pt-3">
-            <div className="text-xs font-bold mb-2 text-center">VAT BREAKDOWN</div>
-            <div className="text-xs space-y-1">
-              <div className="flex justify-between">
-                <span>Net Amount:</span>
-                <span>{Number(order.subtotal).toFixed(2)}</span>
+            <div className="text-xs">
+              <div className="flex justify-between mb-2 font-semibold">
+                <span className="flex-1 text-left">Net Amt</span>
+                <span className="flex-1 text-center">Tax</span>
+                <span className="flex-1 text-center">Tax Amt</span>
+                <span className="flex-1 text-right">Total</span>
               </div>
               <div className="flex justify-between">
-                <span>VAT (5%):</span>
-                <span>{Number(order.tax).toFixed(2)}</span>
-              </div>
-              <div className="flex justify-between font-bold border-t-2 border-gray-900 pt-1 mt-1">
-                <span>Total Inc. VAT:</span>
-                <span>{Number(order.total).toFixed(2)}</span>
+                <span className="flex-1 text-left">{Number(order.subtotal).toFixed(2)}</span>
+                <span className="flex-1 text-center">VAT(5.00%)</span>
+                <span className="flex-1 text-center">{Number(order.tax).toFixed(2)}</span>
+                <span className="flex-1 text-right">{Number(order.total).toFixed(2)}</span>
               </div>
             </div>
           </div>
